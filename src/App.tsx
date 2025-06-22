@@ -10,6 +10,7 @@ import AdminPanel from "./components/AdminPanel";
 import MCQSection from "./components/MCQSection";
 import TipsSection from "./components/TipsSection";
 import QuizSection from "./components/QuizSection";
+import SearchInterface from "./components/SearchInterface";
 import BottomNavigation from "./components/BottomNavigation";
 import DarkModeToggle from "./components/DarkModeToggle";
 import NotFound from "./pages/NotFound";
@@ -31,6 +32,7 @@ const App = () => (
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/tips" element={<TipsSection />} />
             <Route path="/quiz" element={<QuizSection />} />
+            <Route path="/search" element={<SearchInterface />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <BottomNavigation />
