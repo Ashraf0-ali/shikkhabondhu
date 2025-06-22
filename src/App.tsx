@@ -1,9 +1,17 @@
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import HomePage from "./components/HomePage";
+import ChatInterface from "./components/ChatInterface";
+import AdminPanel from "./components/AdminPanel";
+import MCQSection from "./components/MCQSection";
+import TipsSection from "./components/TipsSection";
+import QuizSection from "./components/QuizSection";
+import BottomNavigation from "./components/BottomNavigation";
+import DarkModeToggle from "./components/DarkModeToggle";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -14,11 +22,19 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <div className="min-h-screen">
+          <DarkModeToggle />
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/chat" element={<ChatInterface />} />
+            <Route path="/mcqs" element={<MCQSection />} />
+            <Route path="/admin" element={<AdminPanel />} />
+            <Route path="/tips" element={<TipsSection />} />
+            <Route path="/quiz" element={<QuizSection />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+          <BottomNavigation />
+        </div>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
