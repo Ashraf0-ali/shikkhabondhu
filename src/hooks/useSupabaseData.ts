@@ -41,6 +41,22 @@ export const useSupabaseData = () => {
     }
   });
 
+  const handleMCQAdd = () => {
+    // This function will be called from the component
+  };
+
+  const handleFileUpload = () => {
+    // This function will be called from the component
+  };
+
+  const handleQuoteAdd = () => {
+    // This function will be called from the component
+  };
+
+  const handleApiKeyAdd = () => {
+    // This function will be called from the component
+  };
+
   // Board Questions
   const addBoardQuestion = useMutation({
     mutationFn: async (data: TablesInsert<'board_questions'>) => {
@@ -167,6 +183,10 @@ export const useSupabaseData = () => {
     addNCTBBook,
     addNote,
     addMotivationalQuote,
-    addApiKey
+    addApiKey,
+    handleMCQAdd,
+    handleFileUpload,
+    handleQuoteAdd,
+    handleApiKeyAdd
   };
 };
