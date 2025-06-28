@@ -8,23 +8,28 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BookOpen, FileQuestion, Upload, FileText, Search, Lock, Plus, Trash2, Edit, Key, MessageSquare } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
 
 const AdminPanel = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [textbookForm, setTextbookForm] = useState({
     subject: '',
-    class: '',
+    class_level: '',
     chapter: '',
-    content: ''
+    content: '',
+    title: '',
+    seo_title: '',
+    seo_description: '',
+    seo_tags: ''
   });
   const [mcqForm, setMcqForm] = useState({
     question: '',
-    optionA: '',
-    optionB: '',
-    optionC: '',
-    optionD: '',
-    answer: '',
+    option_a: '',
+    option_b: '',
+    option_c: '',
+    option_d: '',
+    correct_answer: '',
     year: '',
     subject: '',
     chapter: '',
@@ -37,6 +42,7 @@ const AdminPanel = () => {
     year: '',
     board: '',
     fileUrl: '',
+    title: '',
     seoTitle: '',
     seoDescription: '',
     seoTags: ''
@@ -44,15 +50,22 @@ const AdminPanel = () => {
   const [motivationalQuoteForm, setMotivationalQuoteForm] = useState({
     quote: '',
     author: '',
-    tags: '',
-    googleSheetUrl: ''
+    tags: ''
   });
   const [apiKeyForm, setApiKeyForm] = useState({
-    provider: 'openai', // 'openai', 'claude', 'gemini'
-    apiKey: '',
-    isActive: true
+    provider: 'openai' as 'openai' | 'claude' | 'gemini',
+    api_key: ''
   });
   const { toast } = useToast();
+  
+  const {
+    addMCQQuestion,
+    addBoardQuestion,
+    addNCTBBook,
+    addNote,
+    addMotivationalQuote,
+    addApiKey
+  } = useSupabaseData();
 
   const handleLogin = () => {
     if (loginForm.username === 'Ashraf' && loginForm.password === 'Ashraf') {
@@ -71,103 +84,136 @@ const AdminPanel = () => {
     }
   };
 
-  const handleFileUpload = () => {
-    if (fileUploadForm.subject && fileUploadForm.type) {
-      const files = JSON.parse(localStorage.getItem('uploadedFiles') || '[]');
-      files.push({ 
-        ...fileUploadForm, 
-        id: Date.now(),
-        uploadDate: new Date().toISOString()
+  const handleTextbookUpload = () => {
+    if (textbookForm.subject && textbookForm.class_level && textbookForm.title && textbookForm.content) {
+      addNCTBBook.mutate({
+        title: textbookForm.title,
+        subject: textbookForm.subject,
+        class_level: parseInt(textbookForm.class_level),
+        chapter: textbookForm.chapter || null,
+        content: textbookForm.content,
+        file_type: 'text',
+        seo_title: textbookForm.seo_title || null,
+        seo_description: textbookForm.seo_description || null,
+        seo_tags: textbookForm.seo_tags || null
       });
-      localStorage.setItem('uploadedFiles', JSON.stringify(files));
       
-      toast({
-        title: "সফল আপলোড ✅",
-        description: "ফাইলটি সফলভাবে আপলোড হয়েছে",
+      setTextbookForm({
+        subject: '', class_level: '', chapter: '', content: '', title: '',
+        seo_title: '', seo_description: '', seo_tags: ''
       });
+    } else {
+      toast({
+        title: "অসম্পূর্ণ তথ্য ❌",
+        description: "দয়া করে সব প্রয়োজনীয় তথ্য দিন",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleMCQAdd = () => {
+    if (mcqForm.question && mcqForm.correct_answer && mcqForm.subject && 
+        mcqForm.option_a && mcqForm.option_b && mcqForm.option_c && mcqForm.option_d) {
+      
+      addMCQQuestion.mutate({
+        question: mcqForm.question,
+        option_a: mcqForm.option_a,
+        option_b: mcqForm.option_b,
+        option_c: mcqForm.option_c,
+        option_d: mcqForm.option_d,
+        correct_answer: mcqForm.correct_answer as 'A' | 'B' | 'C' | 'D',
+        subject: mcqForm.subject,
+        year: mcqForm.year ? parseInt(mcqForm.year) : null,
+        board: mcqForm.board || null,
+        chapter: mcqForm.chapter || null
+      });
+      
+      setMcqForm({
+        question: '', option_a: '', option_b: '', option_c: '', option_d: '',
+        correct_answer: '', year: '', subject: '', chapter: '', board: ''
+      });
+    } else {
+      toast({
+        title: "অসম্পূর্ণ তথ্য ❌",
+        description: "দয়া করে সব প্রয়োজনীয় তথ্য দিন",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleFileUpload = () => {
+    if (fileUploadForm.subject && fileUploadForm.type && fileUploadForm.title) {
+      if (fileUploadForm.type === 'notes') {
+        addNote.mutate({
+          title: fileUploadForm.title,
+          subject: fileUploadForm.subject,
+          chapter: fileUploadForm.chapter || null,
+          file_url: fileUploadForm.fileUrl || null,
+          file_type: fileUploadForm.fileUrl ? 'pdf' : null,
+          seo_title: fileUploadForm.seoTitle || null,
+          seo_description: fileUploadForm.seoDescription || null,
+          seo_tags: fileUploadForm.seoTags || null
+        });
+      } else if (fileUploadForm.type === 'questions') {
+        addBoardQuestion.mutate({
+          title: fileUploadForm.title,
+          subject: fileUploadForm.subject,
+          year: parseInt(fileUploadForm.year),
+          board: fileUploadForm.board,
+          file_url: fileUploadForm.fileUrl || null,
+          file_type: fileUploadForm.fileUrl ? 'pdf' : null,
+          seo_title: fileUploadForm.seoTitle || null,
+          seo_description: fileUploadForm.seoDescription || null,
+          seo_tags: fileUploadForm.seoTags || null
+        });
+      }
       
       setFileUploadForm({
-        type: 'notes',
-        subject: '',
-        chapter: '',
-        year: '',
-        board: '',
-        fileUrl: '',
-        seoTitle: '',
-        seoDescription: '',
-        seoTags: ''
+        type: 'notes', subject: '', chapter: '', year: '', board: '',
+        fileUrl: '', title: '', seoTitle: '', seoDescription: '', seoTags: ''
+      });
+    } else {
+      toast({
+        title: "অসম্পূর্ণ তথ্য ❌",
+        description: "দয়া করে সব প্রয়োজনীয় তথ্য দিন",
+        variant: "destructive"
       });
     }
   };
 
   const handleQuoteAdd = () => {
     if (motivationalQuoteForm.quote) {
-      const quotes = JSON.parse(localStorage.getItem('motivationalQuotes') || '[]');
-      quotes.push({ 
-        ...motivationalQuoteForm, 
-        id: Date.now(),
-        createdAt: new Date().toISOString()
+      addMotivationalQuote.mutate({
+        quote: motivationalQuoteForm.quote,
+        author: motivationalQuoteForm.author || null,
+        tags: motivationalQuoteForm.tags || null,
+        is_active: true
       });
-      localStorage.setItem('motivationalQuotes', JSON.stringify(quotes));
       
+      setMotivationalQuoteForm({ quote: '', author: '', tags: '' });
+    } else {
       toast({
-        title: "সফল যোগ ✅",
-        description: "উদ্দীপনামূলক উক্তি যুক্ত হয়েছে",
+        title: "অসম্পূর্ণ তথ্য ❌",
+        description: "দয়া করে উক্তি লিখুন",
+        variant: "destructive"
       });
-      
-      setMotivationalQuoteForm({ quote: '', author: '', tags: '', googleSheetUrl: '' });
     }
   };
 
   const handleApiKeyAdd = () => {
-    if (apiKeyForm.apiKey) {
-      const apiKeys = JSON.parse(localStorage.getItem('aiApiKeys') || '[]');
-      apiKeys.push({ 
-        ...apiKeyForm, 
-        id: Date.now(),
-        addedAt: new Date().toISOString()
+    if (apiKeyForm.api_key) {
+      addApiKey.mutate({
+        provider: apiKeyForm.provider,
+        api_key: apiKeyForm.api_key,
+        is_active: true
       });
-      localStorage.setItem('aiApiKeys', JSON.stringify(apiKeys));
       
+      setApiKeyForm({ provider: 'openai', api_key: '' });
+    } else {
       toast({
-        title: "API Key সংরক্ষিত ✅",
-        description: "AI API Key সফলভাবে যুক্ত হয়েছে",
-      });
-      
-      setApiKeyForm({ provider: 'openai', apiKey: '', isActive: true });
-    }
-  };
-
-  const handleTextbookUpload = () => {
-    if (textbookForm.subject && textbookForm.class && textbookForm.chapter && textbookForm.content) {
-      // Save to localStorage for demo
-      const textbooks = JSON.parse(localStorage.getItem('textbooks') || '[]');
-      textbooks.push({ ...textbookForm, id: Date.now() });
-      localStorage.setItem('textbooks', JSON.stringify(textbooks));
-      
-      toast({
-        title: "সফল আপলোড ✅",
-        description: "ফাইলটি সফলভাবে আপলোড হয়েছে",
-      });
-      
-      setTextbookForm({ subject: '', class: '', chapter: '', content: '' });
-    }
-  };
-
-  const handleMCQAdd = () => {
-    if (mcqForm.question && mcqForm.answer) {
-      const mcqs = JSON.parse(localStorage.getItem('mcqs') || '[]');
-      mcqs.push({ ...mcqForm, id: Date.now() });
-      localStorage.setItem('mcqs', JSON.stringify(mcqs));
-      
-      toast({
-        title: "সফল যোগ ✅",
-        description: "MCQ সফলভাবে যুক্ত হয়েছে",
-      });
-      
-      setMcqForm({
-        question: '', optionA: '', optionB: '', optionC: '', optionD: '',
-        answer: '', year: '', subject: '', chapter: '', board: ''
+        title: "অসম্পূর্ণ তথ্য ❌",
+        description: "দয়া করে API Key দিন",
+        variant: "destructive"
       });
     }
   };
@@ -221,7 +267,7 @@ const AdminPanel = () => {
         <Card className="mb-6 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20">
           <CardHeader>
             <CardTitle className="text-center text-3xl text-gray-800 dark:text-white">
-              🛠️ এডমিন প্যানেল - Admin Tools
+              🛠️ এডমিন প্যানেল - Admin Tools (Supabase Connected)
             </CardTitle>
           </CardHeader>
         </Card>
@@ -268,11 +314,17 @@ const AdminPanel = () => {
             <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20">
               <CardHeader>
                 <CardTitle className="text-xl text-gray-800 dark:text-white">
-                  📚 Textbook Management
+                  📚 NCTB Textbook Management
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <Input
+                    placeholder="Title (e.g., English for Today)"
+                    value={textbookForm.title}
+                    onChange={(e) => setTextbookForm({ ...textbookForm, title: e.target.value })}
+                    className="bg-white/50 dark:bg-gray-700/50 border-white/20"
+                  />
                   <Input
                     placeholder="Subject (e.g., English)"
                     value={textbookForm.subject}
@@ -281,17 +333,17 @@ const AdminPanel = () => {
                   />
                   <Input
                     placeholder="Class (e.g., 9)"
-                    value={textbookForm.class}
-                    onChange={(e) => setTextbookForm({ ...textbookForm, class: e.target.value })}
-                    className="bg-white/50 dark:bg-gray-700/50 border-white/20"
-                  />
-                  <Input
-                    placeholder="Chapter (e.g., 2)"
-                    value={textbookForm.chapter}
-                    onChange={(e) => setTextbookForm({ ...textbookForm, chapter: e.target.value })}
+                    value={textbookForm.class_level}
+                    onChange={(e) => setTextbookForm({ ...textbookForm, class_level: e.target.value })}
                     className="bg-white/50 dark:bg-gray-700/50 border-white/20"
                   />
                 </div>
+                <Input
+                  placeholder="Chapter (optional)"
+                  value={textbookForm.chapter}
+                  onChange={(e) => setTextbookForm({ ...textbookForm, chapter: e.target.value })}
+                  className="bg-white/50 dark:bg-gray-700/50 border-white/20"
+                />
                 <Textarea
                   placeholder="Content (multiline text)"
                   value={textbookForm.content}
@@ -299,12 +351,34 @@ const AdminPanel = () => {
                   rows={6}
                   className="bg-white/50 dark:bg-gray-700/50 border-white/20"
                 />
+                <div className="space-y-2">
+                  <h4 className="font-semibold text-gray-800 dark:text-white">SEO Information (Optional)</h4>
+                  <Input
+                    placeholder="SEO Title"
+                    value={textbookForm.seo_title}
+                    onChange={(e) => setTextbookForm({ ...textbookForm, seo_title: e.target.value })}
+                    className="bg-white/50 dark:bg-gray-700/50 border-white/20"
+                  />
+                  <Textarea
+                    placeholder="SEO Description"
+                    value={textbookForm.seo_description}
+                    onChange={(e) => setTextbookForm({ ...textbookForm, seo_description: e.target.value })}
+                    className="bg-white/50 dark:bg-gray-700/50 border-white/20"
+                  />
+                  <Input
+                    placeholder="SEO Tags (comma separated)"
+                    value={textbookForm.seo_tags}
+                    onChange={(e) => setTextbookForm({ ...textbookForm, seo_tags: e.target.value })}
+                    className="bg-white/50 dark:bg-gray-700/50 border-white/20"
+                  />
+                </div>
                 <Button
                   onClick={handleTextbookUpload}
+                  disabled={addNCTBBook.isPending}
                   className="bg-gradient-to-r from-[#00C49A] to-[#8E24AA] hover:from-[#00A085] hover:to-[#7B1FA2] text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Upload Textbook
+                  {addNCTBBook.isPending ? 'Uploading...' : 'Upload Textbook'}
                 </Button>
               </CardContent>
             </Card>
@@ -314,7 +388,7 @@ const AdminPanel = () => {
             <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20">
               <CardHeader>
                 <CardTitle className="text-xl text-gray-800 dark:text-white">
-                  ❓ Question Bank Management
+                  ❓ MCQ Question Management
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -327,36 +401,41 @@ const AdminPanel = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <Input
                     placeholder="Option A"
-                    value={mcqForm.optionA}
-                    onChange={(e) => setMcqForm({ ...mcqForm, optionA: e.target.value })}
+                    value={mcqForm.option_a}
+                    onChange={(e) => setMcqForm({ ...mcqForm, option_a: e.target.value })}
                     className="bg-white/50 dark:bg-gray-700/50 border-white/20"
                   />
                   <Input
                     placeholder="Option B"
-                    value={mcqForm.optionB}
-                    onChange={(e) => setMcqForm({ ...mcqForm, optionB: e.target.value })}
+                    value={mcqForm.option_b}
+                    onChange={(e) => setMcqForm({ ...mcqForm, option_b: e.target.value })}
                     className="bg-white/50 dark:bg-gray-700/50 border-white/20"
                   />
                   <Input
                     placeholder="Option C"
-                    value={mcqForm.optionC}
-                    onChange={(e) => setMcqForm({ ...mcqForm, optionC: e.target.value })}
+                    value={mcqForm.option_c}
+                    onChange={(e) => setMcqForm({ ...mcqForm, option_c: e.target.value })}
                     className="bg-white/50 dark:bg-gray-700/50 border-white/20"
                   />
                   <Input
                     placeholder="Option D"
-                    value={mcqForm.optionD}
-                    onChange={(e) => setMcqForm({ ...mcqForm, optionD: e.target.value })}
+                    value={mcqForm.option_d}
+                    onChange={(e) => setMcqForm({ ...mcqForm, option_d: e.target.value })}
                     className="bg-white/50 dark:bg-gray-700/50 border-white/20"
                   />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-                  <Input
-                    placeholder="Correct Answer (A/B/C/D)"
-                    value={mcqForm.answer}
-                    onChange={(e) => setMcqForm({ ...mcqForm, answer: e.target.value })}
-                    className="bg-white/50 dark:bg-gray-700/50 border-white/20"
-                  />
+                  <Select value={mcqForm.correct_answer} onValueChange={(value) => setMcqForm({ ...mcqForm, correct_answer: value })}>
+                    <SelectTrigger className="bg-white/50 dark:bg-gray-700/50 border-white/20">
+                      <SelectValue placeholder="Correct Answer" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="A">A</SelectItem>
+                      <SelectItem value="B">B</SelectItem>
+                      <SelectItem value="C">C</SelectItem>
+                      <SelectItem value="D">D</SelectItem>
+                    </SelectContent>
+                  </Select>
                   <Input
                     placeholder="Year"
                     value={mcqForm.year}
@@ -370,13 +449,13 @@ const AdminPanel = () => {
                     className="bg-white/50 dark:bg-gray-700/50 border-white/20"
                   />
                   <Input
-                    placeholder="Chapter"
+                    placeholder="Chapter (optional)"
                     value={mcqForm.chapter}
                     onChange={(e) => setMcqForm({ ...mcqForm, chapter: e.target.value })}
                     className="bg-white/50 dark:bg-gray-700/50 border-white/20"
                   />
                   <Input
-                    placeholder="Board"
+                    placeholder="Board (optional)"
                     value={mcqForm.board}
                     onChange={(e) => setMcqForm({ ...mcqForm, board: e.target.value })}
                     className="bg-white/50 dark:bg-gray-700/50 border-white/20"
@@ -384,10 +463,11 @@ const AdminPanel = () => {
                 </div>
                 <Button
                   onClick={handleMCQAdd}
+                  disabled={addMCQQuestion.isPending}
                   className="bg-gradient-to-r from-[#00C49A] to-[#8E24AA] hover:from-[#00A085] hover:to-[#7B1FA2] text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add MCQ
+                  {addMCQQuestion.isPending ? 'Adding...' : 'Add MCQ'}
                 </Button>
               </CardContent>
             </Card>
@@ -397,7 +477,7 @@ const AdminPanel = () => {
             <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20">
               <CardHeader>
                 <CardTitle className="text-xl text-gray-800 dark:text-white">
-                  📄 PDF & Image Upload
+                  📄 File Upload Management
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -409,20 +489,26 @@ const AdminPanel = () => {
                     <SelectContent>
                       <SelectItem value="notes">📝 Notes</SelectItem>
                       <SelectItem value="questions">❓ Question Papers</SelectItem>
-                      <SelectItem value="nctb">📚 NCTB Books</SelectItem>
                     </SelectContent>
                   </Select>
                   <Input
-                    placeholder="Subject"
-                    value={fileUploadForm.subject}
-                    onChange={(e) => setFileUploadForm({...fileUploadForm, subject: e.target.value})}
+                    placeholder="Title"
+                    value={fileUploadForm.title}
+                    onChange={(e) => setFileUploadForm({...fileUploadForm, title: e.target.value})}
                     className="bg-white/50 dark:bg-gray-700/50 border-white/20"
                   />
                 </div>
                 
+                <Input
+                  placeholder="Subject"
+                  value={fileUploadForm.subject}
+                  onChange={(e) => setFileUploadForm({...fileUploadForm, subject: e.target.value})}
+                  className="bg-white/50 dark:bg-gray-700/50 border-white/20"
+                />
+                
                 {fileUploadForm.type === 'notes' && (
                   <Input
-                    placeholder="Chapter"
+                    placeholder="Chapter (optional)"
                     value={fileUploadForm.chapter}
                     onChange={(e) => setFileUploadForm({...fileUploadForm, chapter: e.target.value})}
                     className="bg-white/50 dark:bg-gray-700/50 border-white/20"
@@ -446,22 +532,15 @@ const AdminPanel = () => {
                   </div>
                 )}
 
-                <div className="border-2 border-dashed border-[#8E24AA] rounded-lg p-8 text-center">
-                  <Upload className="w-12 h-12 text-[#8E24AA] mx-auto mb-4" />
-                  <p className="text-gray-600 dark:text-gray-300 mb-2">
-                    Upload PDF, PNG, JPEG, JPG, HEIC files
-                  </p>
-                </div>
-                
                 <Input
-                  placeholder="Or paste file URL here"
+                  placeholder="File URL (PDF/Image link)"
                   value={fileUploadForm.fileUrl}
                   onChange={(e) => setFileUploadForm({...fileUploadForm, fileUrl: e.target.value})}
                   className="bg-white/50 dark:bg-gray-700/50 border-white/20"
                 />
 
                 <div className="space-y-2">
-                  <h4 className="font-semibold text-gray-800 dark:text-white">SEO Information</h4>
+                  <h4 className="font-semibold text-gray-800 dark:text-white">SEO Information (Optional)</h4>
                   <Input
                     placeholder="SEO Title"
                     value={fileUploadForm.seoTitle}
@@ -484,10 +563,11 @@ const AdminPanel = () => {
 
                 <Button
                   onClick={handleFileUpload}
+                  disabled={addNote.isPending || addBoardQuestion.isPending}
                   className="w-full bg-gradient-to-r from-[#00C49A] to-[#8E24AA] hover:from-[#00A085] hover:to-[#7B1FA2] text-white"
                 >
                   <Upload className="w-4 h-4 mr-2" />
-                  Upload File
+                  {(addNote.isPending || addBoardQuestion.isPending) ? 'Uploading...' : 'Upload File'}
                 </Button>
               </CardContent>
             </Card>
@@ -522,18 +602,13 @@ const AdminPanel = () => {
                     className="bg-white/50 dark:bg-gray-700/50 border-white/20"
                   />
                 </div>
-                <Input
-                  placeholder="Or Google Sheet Public URL"
-                  value={motivationalQuoteForm.googleSheetUrl}
-                  onChange={(e) => setMotivationalQuoteForm({...motivationalQuoteForm, googleSheetUrl: e.target.value})}
-                  className="bg-white/50 dark:bg-gray-700/50 border-white/20"
-                />
                 <Button
                   onClick={handleQuoteAdd}
+                  disabled={addMotivationalQuote.isPending}
                   className="bg-gradient-to-r from-[#00C49A] to-[#8E24AA] hover:from-[#00A085] hover:to-[#7B1FA2] text-white"
                 >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Quote
+                  {addMotivationalQuote.isPending ? 'Adding...' : 'Add Quote'}
                 </Button>
               </CardContent>
             </Card>
@@ -547,7 +622,7 @@ const AdminPanel = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <Select value={apiKeyForm.provider} onValueChange={(value) => setApiKeyForm({...apiKeyForm, provider: value})}>
+                <Select value={apiKeyForm.provider} onValueChange={(value) => setApiKeyForm({...apiKeyForm, provider: value as any})}>
                   <SelectTrigger className="bg-white/50 dark:bg-gray-700/50 border-white/20">
                     <SelectValue placeholder="Select AI Provider" />
                   </SelectTrigger>
@@ -560,16 +635,17 @@ const AdminPanel = () => {
                 <Input
                   type="password"
                   placeholder="API Key"
-                  value={apiKeyForm.apiKey}
-                  onChange={(e) => setApiKeyForm({...apiKeyForm, apiKey: e.target.value})}
+                  value={apiKeyForm.api_key}
+                  onChange={(e) => setApiKeyForm({...apiKeyForm, api_key: e.target.value})}
                   className="bg-white/50 dark:bg-gray-700/50 border-white/20"
                 />
                 <Button
                   onClick={handleApiKeyAdd}
+                  disabled={addApiKey.isPending}
                   className="bg-gradient-to-r from-[#00C49A] to-[#8E24AA] hover:from-[#00A085] hover:to-[#7B1FA2] text-white"
                 >
                   <Key className="w-4 h-4 mr-2" />
-                  Save API Key
+                  {addApiKey.isPending ? 'Saving...' : 'Save API Key'}
                 </Button>
               </CardContent>
             </Card>

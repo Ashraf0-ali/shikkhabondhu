@@ -9,33 +9,273 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      Contacts: {
+      api_keys: {
         Row: {
-          date_added: string | null
+          api_key: string
+          created_at: string
           id: string
-          name: string | null
-          number: string | null
-          story: string | null
-          tags: string | null
-          user_id: string | null
+          is_active: boolean | null
+          provider: string
         }
         Insert: {
-          date_added?: string | null
+          api_key: string
+          created_at?: string
           id?: string
-          name?: string | null
-          number?: string | null
-          story?: string | null
-          tags?: string | null
-          user_id?: string | null
+          is_active?: boolean | null
+          provider: string
         }
         Update: {
-          date_added?: string | null
+          api_key?: string
+          created_at?: string
           id?: string
-          name?: string | null
-          number?: string | null
-          story?: string | null
+          is_active?: boolean | null
+          provider?: string
+        }
+        Relationships: []
+      }
+      board_questions: {
+        Row: {
+          board: string
+          created_at: string
+          file_type: string | null
+          file_url: string | null
+          id: string
+          seo_description: string | null
+          seo_tags: string | null
+          seo_title: string | null
+          subject: string
+          title: string
+          year: number
+        }
+        Insert: {
+          board: string
+          created_at?: string
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          seo_description?: string | null
+          seo_tags?: string | null
+          seo_title?: string | null
+          subject: string
+          title: string
+          year: number
+        }
+        Update: {
+          board?: string
+          created_at?: string
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          seo_description?: string | null
+          seo_tags?: string | null
+          seo_title?: string | null
+          subject?: string
+          title?: string
+          year?: number
+        }
+        Relationships: []
+      }
+      Contacts: {
+        Row: {}
+        Insert: {}
+        Update: {}
+        Relationships: []
+      }
+      mcq_questions: {
+        Row: {
+          board: string | null
+          chapter: string | null
+          correct_answer: string
+          created_at: string
+          id: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question: string
+          subject: string
+          updated_at: string
+          year: number | null
+        }
+        Insert: {
+          board?: string | null
+          chapter?: string | null
+          correct_answer: string
+          created_at?: string
+          id?: string
+          option_a: string
+          option_b: string
+          option_c: string
+          option_d: string
+          question: string
+          subject: string
+          updated_at?: string
+          year?: number | null
+        }
+        Update: {
+          board?: string | null
+          chapter?: string | null
+          correct_answer?: string
+          created_at?: string
+          id?: string
+          option_a?: string
+          option_b?: string
+          option_c?: string
+          option_d?: string
+          question?: string
+          subject?: string
+          updated_at?: string
+          year?: number | null
+        }
+        Relationships: []
+      }
+      motivational_quotes: {
+        Row: {
+          author: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          quote: string
+          tags: string | null
+        }
+        Insert: {
+          author?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          quote: string
           tags?: string | null
-          user_id?: string | null
+        }
+        Update: {
+          author?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          quote?: string
+          tags?: string | null
+        }
+        Relationships: []
+      }
+      nctb_books: {
+        Row: {
+          chapter: string | null
+          class_level: number
+          content: string | null
+          created_at: string
+          file_type: string | null
+          file_url: string | null
+          id: string
+          seo_description: string | null
+          seo_tags: string | null
+          seo_title: string | null
+          subject: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          chapter?: string | null
+          class_level: number
+          content?: string | null
+          created_at?: string
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          seo_description?: string | null
+          seo_tags?: string | null
+          seo_title?: string | null
+          subject: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          chapter?: string | null
+          class_level?: number
+          content?: string | null
+          created_at?: string
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          seo_description?: string | null
+          seo_tags?: string | null
+          seo_title?: string | null
+          subject?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      notes: {
+        Row: {
+          chapter: string | null
+          content: string | null
+          created_at: string
+          file_type: string | null
+          file_url: string | null
+          id: string
+          seo_description: string | null
+          seo_tags: string | null
+          seo_title: string | null
+          subject: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          chapter?: string | null
+          content?: string | null
+          created_at?: string
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          seo_description?: string | null
+          seo_tags?: string | null
+          seo_title?: string | null
+          subject: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          chapter?: string | null
+          content?: string | null
+          created_at?: string
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          seo_description?: string | null
+          seo_tags?: string | null
+          seo_title?: string | null
+          subject?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tips_feedback: {
+        Row: {
+          category: string | null
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          updated_at?: string
         }
         Relationships: []
       }
