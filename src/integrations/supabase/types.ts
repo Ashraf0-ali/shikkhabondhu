@@ -88,11 +88,12 @@ export type Database = {
           correct_answer: string
           created_at: string
           id: string
-          option_a: string
-          option_b: string
-          option_c: string
-          option_d: string
+          option_a: string | null
+          option_b: string | null
+          option_c: string | null
+          option_d: string | null
           question: string
+          question_type: string | null
           subject: string
           updated_at: string
           year: number | null
@@ -103,11 +104,12 @@ export type Database = {
           correct_answer: string
           created_at?: string
           id?: string
-          option_a: string
-          option_b: string
-          option_c: string
-          option_d: string
+          option_a?: string | null
+          option_b?: string | null
+          option_c?: string | null
+          option_d?: string | null
           question: string
+          question_type?: string | null
           subject: string
           updated_at?: string
           year?: number | null
@@ -118,11 +120,12 @@ export type Database = {
           correct_answer?: string
           created_at?: string
           id?: string
-          option_a?: string
-          option_b?: string
-          option_c?: string
-          option_d?: string
+          option_a?: string | null
+          option_b?: string | null
+          option_c?: string | null
+          option_d?: string | null
           question?: string
+          question_type?: string | null
           subject?: string
           updated_at?: string
           year?: number | null

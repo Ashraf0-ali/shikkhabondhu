@@ -6,7 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { BookOpen, FileQuestion, Upload, FileText, Search, Lock, Plus, Trash2, Edit, Key, MessageSquare } from 'lucide-react';
+import { BookOpen, FileQuestion, Upload, FileText, Search, Lock, Plus, Trash2, Edit, Key, MessageSquare, Trophy } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useSupabaseData } from '@/hooks/useSupabaseData';
 
@@ -20,7 +20,7 @@ const AdminPanel = () => {
     content: '',
     title: '',
     file_url: '',
-    file_type: 'text', // Added file_type to track text or PDF
+    file_type: 'text',
     seo_title: '',
     seo_description: '',
     seo_tags: ''
@@ -38,7 +38,7 @@ const AdminPanel = () => {
     board: ''
   });
   const [fileUploadForm, setFileUploadForm] = useState({
-    type: 'notes', // 'notes' or 'questions'
+    type: 'notes',
     subject: '',
     chapter: '',
     year: '',
@@ -60,6 +60,20 @@ const AdminPanel = () => {
   });
   const [csvFile, setCsvFile] = useState<File | null>(null);
   const [isProcessingCSV, setIsProcessingCSV] = useState(false);
+  
+  // Add practice game form state
+  const [practiceGameForm, setPracticeGameForm] = useState({
+    title: '',
+    description: '',
+    subject: '',
+    difficulty: 'medium' as 'easy' | 'medium' | 'hard',
+    questions: [] as Array<{
+      question: string;
+      options: string[];
+      correct_answer: number;
+    }>
+  });
+
   const { toast } = useToast();
   
   const {
@@ -90,7 +104,6 @@ const AdminPanel = () => {
 
   const handleTextbookUpload = () => {
     if (textbookForm.subject && textbookForm.class_level && textbookForm.title) {
-      // For text content, content is required. For PDF, file_url is required
       if (textbookForm.file_type === 'text' && !textbookForm.content) {
         toast({
           title: "অসম্পূর্ণ তথ্য ❌",
@@ -379,8 +392,8 @@ const AdminPanel = () => {
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-200/50">
+      <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-gray-200/50">
           <CardHeader>
             <CardTitle className="text-center text-2xl text-gray-700 dark:text-white">
               🔐 Admin Login
@@ -391,14 +404,14 @@ const AdminPanel = () => {
               placeholder="Username"
               value={loginForm.username}
               onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
-              className="bg-white/70 dark:bg-gray-700/70 border-gray-300/50"
+              className="bg-white/50 dark:bg-gray-700/50 border-gray-300/50"
             />
             <Input
               type="password"
               placeholder="Password"
               value={loginForm.password}
               onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
-              className="bg-white/70 dark:bg-gray-700/70 border-gray-300/50"
+              className="bg-white/50 dark:bg-gray-700/50 border-gray-300/50"
             />
             <Button
               onClick={handleLogin}
@@ -414,9 +427,9 @@ const AdminPanel = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="max-w-6xl mx-auto">
-        <Card className="mb-6 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm border-gray-200/50">
+        <Card className="mb-6 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-gray-200/50">
           <CardHeader>
             <CardTitle className="text-center text-3xl text-gray-700 dark:text-white">
               🛠️ এডমিন প্যানেল - Admin Tools (Supabase Connected)
@@ -425,7 +438,7 @@ const AdminPanel = () => {
         </Card>
 
         <Tabs defaultValue="textbooks" className="space-y-4">
-          <TabsList className="grid w-full grid-cols-8 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-9 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm">
             <TabsTrigger value="textbooks" className="flex items-center space-x-2">
               <BookOpen className="w-4 h-4" />
               <span className="hidden sm:inline">📚 Books</span>
@@ -449,6 +462,10 @@ const AdminPanel = () => {
             <TabsTrigger value="api" className="flex items-center space-x-2">
               <Key className="w-4 h-4" />
               <span className="hidden sm:inline">🔑 API</span>
+            </TabsTrigger>
+            <TabsTrigger value="games" className="flex items-center space-x-2">
+              <Trophy className="w-4 h-4" />
+              <span className="hidden sm:inline">🎮 Games</span>
             </TabsTrigger>
             <TabsTrigger value="seo" className="flex items-center space-x-2">
               <Search className="w-4 h-4" />
@@ -871,6 +888,63 @@ const AdminPanel = () => {
                 >
                   {isProcessingCSV ? 'Processing...' : 'Import MCQ Data'}
                 </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="games">
+            <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-gray-200/50">
+              <CardHeader>
+                <CardTitle className="text-xl text-gray-700 dark:text-white">
+                  🎮 প্রাকটিস গেম ম্যানেজমেন্ট
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    placeholder="Game Title"
+                    value={practiceGameForm.title}
+                    onChange={(e) => setPracticeGameForm({ ...practiceGameForm, title: e.target.value })}
+                    className="bg-white/50 dark:bg-gray-700/50 border-gray-300/50"
+                  />
+                  <Select value={practiceGameForm.difficulty} onValueChange={(value) => setPracticeGameForm({ ...practiceGameForm, difficulty: value as any })}>
+                    <SelectTrigger className="bg-white/50 dark:bg-gray-700/50 border-gray-300/50">
+                      <SelectValue placeholder="Difficulty Level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="easy">🟢 Easy</SelectItem>
+                      <SelectItem value="medium">🟡 Medium</SelectItem>
+                      <SelectItem value="hard">🔴 Hard</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <Input
+                  placeholder="Subject"
+                  value={practiceGameForm.subject}
+                  onChange={(e) => setPracticeGameForm({ ...practiceGameForm, subject: e.target.value })}
+                  className="bg-white/50 dark:bg-gray-700/50 border-gray-300/50"
+                />
+                
+                <Textarea
+                  placeholder="Game Description"
+                  value={practiceGameForm.description}
+                  onChange={(e) => setPracticeGameForm({ ...practiceGameForm, description: e.target.value })}
+                  className="bg-white/50 dark:bg-gray-700/50 border-gray-300/50"
+                />
+
+                <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                  <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">Game Questions:</h4>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+                    প্রাকটিস গেমের প্রশ্নগুলো MCQ সেকশন থেকে automatically নেওয়া হবে
+                  </p>
+                  <Button
+                    className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
+                  >
+                    <Trophy className="w-4 h-4 mr-2" />
+                    Create Practice Game
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
