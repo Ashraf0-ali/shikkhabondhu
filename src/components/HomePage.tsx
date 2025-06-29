@@ -49,10 +49,10 @@ const HomePage = () => {
   }, {} as Record<string, typeof nctbBooks>);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-100 to-blue-100 dark:from-gray-900 dark:to-gray-800 p-4 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4 pb-20">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg">
+        <Card className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg">
           <CardHeader>
             <CardTitle className="text-center text-4xl font-bold bg-gradient-to-r from-[#00C49A] to-[#8E24AA] bg-clip-text text-transparent">
               🎓 শিক্ষার্থী সহায়ক
@@ -65,7 +65,7 @@ const HomePage = () => {
 
         {/* Motivational Quote */}
         {quote && (
-          <Card className="bg-gradient-to-r from-[#00C49A]/20 to-[#8E24AA]/20 backdrop-blur-md border-white/20 shadow-lg">
+          <Card className="bg-gradient-to-r from-[#00C49A]/10 to-[#8E24AA]/10 backdrop-blur-md border-white/20 shadow-lg">
             <CardContent className="p-6">
               <blockquote className="text-lg font-medium text-gray-700 dark:text-gray-200 italic text-center">
                 "{quote.quote}"
@@ -81,7 +81,7 @@ const HomePage = () => {
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <Card className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-6 text-center">
               <MessageCircle className="w-12 h-12 text-[#00C49A] mx-auto mb-4" />
               <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
@@ -97,7 +97,7 @@ const HomePage = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <Card className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-6 text-center">
               <FileQuestion className="w-12 h-12 text-[#8E24AA] mx-auto mb-4" />
               <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
@@ -110,10 +110,10 @@ const HomePage = () => {
                 প্র্যাকটিস শুরু করুন
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
-            </Content>
+            </CardContent>
           </Card>
 
-          <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <Card className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-6 text-center">
               <Search className="w-12 h-12 text-blue-500 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
@@ -129,7 +129,7 @@ const HomePage = () => {
             </CardContent>
           </Card>
 
-          <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <Card className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
             <CardContent className="p-6 text-center">
               <Trophy className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
               <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
