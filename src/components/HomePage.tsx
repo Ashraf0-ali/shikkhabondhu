@@ -5,8 +5,11 @@ import { Button } from '@/components/ui/button';
 import { BookOpen, Brain, FileQuestion, Search, Users, Trophy, MessageCircle, ChevronRight, Book, FileText, GraduationCap } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useNavigate } from 'react-router-dom';
 
 const HomePage = () => {
+  const navigate = useNavigate();
+
   // Fetch NCTB books from Supabase
   const { data: nctbBooks = [], isLoading } = useQuery({
     queryKey: ['nctb_books'],
@@ -48,16 +51,20 @@ const HomePage = () => {
     return acc;
   }, {} as Record<string, typeof nctbBooks>);
 
+  const handleNavigation = (path: string) => {
+    navigate(path);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-gray-900 dark:to-gray-800 p-4 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4 pb-20">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <Card className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-center text-4xl font-bold bg-gradient-to-r from-[#00C49A] to-[#8E24AA] bg-clip-text text-transparent">
+        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
+          <CardHeader className="text-center py-8">
+            <CardTitle className="text-5xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent mb-4">
               🎓 শিক্ষার্থী সহায়ক
             </CardTitle>
-            <p className="text-center text-gray-600 dark:text-gray-300 text-lg">
+            <p className="text-gray-600 dark:text-gray-300 text-xl max-w-2xl mx-auto">
               আপনার পড়াশোনার সঙ্গী - বোর্ড প্রশ্ন, MCQ, AI সহায়তা এবং আরও অনেক কিছু
             </p>
           </CardHeader>
@@ -65,13 +72,13 @@ const HomePage = () => {
 
         {/* Motivational Quote */}
         {quote && (
-          <Card className="bg-gradient-to-r from-[#00C49A]/10 to-[#8E24AA]/10 backdrop-blur-md border-white/20 shadow-lg">
-            <CardContent className="p-6">
-              <blockquote className="text-lg font-medium text-gray-700 dark:text-gray-200 italic text-center">
+          <Card className="bg-gradient-to-r from-blue-100/80 to-purple-100/80 dark:from-blue-900/30 dark:to-purple-900/30 backdrop-blur-xl border-white/30 shadow-xl">
+            <CardContent className="p-8">
+              <blockquote className="text-xl font-medium text-gray-700 dark:text-gray-200 italic text-center leading-relaxed">
                 "{quote.quote}"
               </blockquote>
               {quote.author && (
-                <p className="text-right text-gray-500 dark:text-gray-400 mt-2">
+                <p className="text-right text-gray-500 dark:text-gray-400 mt-4 text-lg">
                   - {quote.author}
                 </p>
               )}
@@ -80,65 +87,85 @@ const HomePage = () => {
         )}
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:-translate-y-1">
             <CardContent className="p-6 text-center">
-              <MessageCircle className="w-12 h-12 text-[#00C49A] mx-auto mb-4" />
+              <div className="bg-gradient-to-br from-blue-500 to-teal-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <MessageCircle className="w-8 h-8 text-white" />
+              </div>
               <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
                 Ask AI
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
                 AI এর সাথে চ্যাট করে যেকোনো প্রশ্নের উত্তর পান
               </p>
-              <Button className="w-full bg-gradient-to-r from-[#00C49A] to-[#8E24AA] hover:from-[#00A085] hover:to-[#7B1FA2] text-white">
+              <Button 
+                onClick={() => handleNavigation('/chat')}
+                className="w-full bg-gradient-to-r from-blue-500 to-teal-500 hover:from-blue-600 hover:to-teal-600 text-white shadow-lg"
+              >
                 চ্যাট শুরু করুন
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:-translate-y-1">
             <CardContent className="p-6 text-center">
-              <FileQuestion className="w-12 h-12 text-[#8E24AA] mx-auto mb-4" />
+              <div className="bg-gradient-to-br from-purple-500 to-pink-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <FileQuestion className="w-8 h-8 text-white" />
+              </div>
               <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
                 MCQ প্র্যাকটিস
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
                 বোর্ড প্রশ্নের MCQ দিয়ে প্র্যাকটিস করুন
               </p>
-              <Button className="w-full bg-gradient-to-r from-[#8E24AA] to-[#00C49A] hover:from-[#7B1FA2] hover:to-[#00A085] text-white">
+              <Button 
+                onClick={() => handleNavigation('/mcqs')}
+                className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white shadow-lg"
+              >
                 প্র্যাকটিস শুরু করুন
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:-translate-y-1">
             <CardContent className="p-6 text-center">
-              <Search className="w-12 h-12 text-blue-500 mx-auto mb-4" />
+              <div className="bg-gradient-to-br from-indigo-500 to-blue-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <Search className="w-8 h-8 text-white" />
+              </div>
               <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
                 স্মার্ট সার্চ
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
                 যেকোনো বিষয়ে তাৎক্ষণিক সার্চ করুন
               </p>
-              <Button className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white">
+              <Button 
+                onClick={() => handleNavigation('/search')}
+                className="w-full bg-gradient-to-r from-indigo-500 to-blue-500 hover:from-indigo-600 hover:to-blue-600 text-white shadow-lg"
+              >
                 সার্চ করুন
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105">
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:-translate-y-1">
             <CardContent className="p-6 text-center">
-              <Trophy className="w-12 h-12 text-yellow-500 mx-auto mb-4" />
+              <div className="bg-gradient-to-br from-yellow-500 to-orange-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+                <Trophy className="w-8 h-8 text-white" />
+              </div>
               <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
                 কুইজ গেম
               </h3>
               <p className="text-gray-600 dark:text-gray-300 text-sm mb-4">
                 মজার কুইজ খেলে শিখুন
               </p>
-              <Button className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white">
+              <Button 
+                onClick={() => handleNavigation('/quiz')}
+                className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white shadow-lg"
+              >
                 গেম খেলুন
                 <ChevronRight className="w-4 h-4 ml-2" />
               </Button>
@@ -146,60 +173,76 @@ const HomePage = () => {
           </Card>
         </div>
 
-        {/* NCTB Books Section */}
-        <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg">
+        {/* NCTB Books Section - Organized by Class */}
+        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
           <CardHeader>
-            <CardTitle className="text-2xl text-gray-800 dark:text-white flex items-center">
-              <BookOpen className="w-8 h-8 text-[#00C49A] mr-3" />
+            <CardTitle className="text-3xl text-gray-800 dark:text-white flex items-center">
+              <BookOpen className="w-10 h-10 text-blue-600 mr-4" />
               📚 NCTB পাঠ্যবই
             </CardTitle>
+            <p className="text-gray-600 dark:text-gray-300 text-lg">
+              ক্লাস অনুযায়ী সাজানো পাঠ্যবই
+            </p>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             {isLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#00C49A] mx-auto"></div>
-                <p className="mt-4 text-gray-600 dark:text-gray-300">বই লোড হচ্ছে...</p>
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto"></div>
+                <p className="mt-6 text-gray-600 dark:text-gray-300 text-lg">বই লোড হচ্ছে...</p>
               </div>
             ) : Object.keys(booksByClass).length > 0 ? (
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {Object.entries(booksByClass).map(([className, books]) => (
                   <div key={className}>
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-4 flex items-center">
-                      <GraduationCap className="w-6 h-6 text-[#8E24AA] mr-2" />
-                      {className}
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="flex items-center mb-6">
+                      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-2xl shadow-lg">
+                        <h3 className="text-2xl font-bold flex items-center">
+                          <GraduationCap className="w-7 h-7 mr-3" />
+                          {className}
+                        </h3>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                       {books.map((book) => (
-                        <Card key={book.id} className="bg-white/40 dark:bg-gray-700/40 backdrop-blur-sm border-white/20 hover:shadow-lg transition-all duration-300 hover:scale-102">
-                          <CardContent className="p-4">
-                            <div className="flex items-start space-x-3">
+                        <Card key={book.id} className="bg-white/70 dark:bg-gray-700/60 backdrop-blur-sm border-white/30 hover:shadow-xl transition-all duration-300 hover:scale-105 group">
+                          <CardContent className="p-5">
+                            <div className="flex items-start space-x-4">
                               <div className="flex-shrink-0">
-                                {book.file_type === 'pdf' ? (
-                                  <FileText className="w-8 h-8 text-red-500" />
-                                ) : (
-                                  <Book className="w-8 h-8 text-blue-500" />
-                                )}
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
+                                  book.file_type === 'pdf' 
+                                    ? 'bg-red-100 dark:bg-red-900/30' 
+                                    : 'bg-blue-100 dark:bg-blue-900/30'
+                                } shadow-md group-hover:shadow-lg transition-shadow`}>
+                                  {book.file_type === 'pdf' ? (
+                                    <FileText className="w-6 h-6 text-red-600 dark:text-red-400" />
+                                  ) : (
+                                    <Book className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                                  )}
+                                </div>
                               </div>
                               <div className="flex-grow min-w-0">
-                                <h4 className="font-bold text-gray-800 dark:text-white text-sm truncate">
+                                <h4 className="font-bold text-gray-800 dark:text-white text-sm leading-tight mb-2">
                                   {book.title}
                                 </h4>
-                                <p className="text-gray-600 dark:text-gray-300 text-xs mt-1">
-                                  বিষয়: {book.subject}
-                                </p>
-                                {book.chapter && (
-                                  <p className="text-gray-500 dark:text-gray-400 text-xs">
-                                    অধ্যায়: {book.chapter}
+                                <div className="space-y-1 mb-4">
+                                  <p className="text-gray-600 dark:text-gray-300 text-xs flex items-center">
+                                    <span className="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
+                                    বিষয়: {book.subject}
                                   </p>
-                                )}
+                                  {book.chapter && (
+                                    <p className="text-gray-500 dark:text-gray-400 text-xs flex items-center">
+                                      <span className="w-2 h-2 bg-gray-400 rounded-full mr-2"></span>
+                                      অধ্যায়: {book.chapter}
+                                    </p>
+                                  )}
+                                </div>
                                 <Button 
                                   size="sm" 
-                                  className="mt-3 w-full bg-gradient-to-r from-[#00C49A] to-[#8E24AA] hover:from-[#00A085] hover:to-[#7B1FA2] text-white text-xs"
+                                  className="w-full bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white text-xs shadow-md hover:shadow-lg transition-all"
                                   onClick={() => {
                                     if (book.file_url) {
                                       window.open(book.file_url, '_blank');
                                     } else {
-                                      // Handle text content view
                                       console.log('View text content:', book.content);
                                     }
                                   }}
@@ -217,12 +260,14 @@ const HomePage = () => {
                 ))}
               </div>
             ) : (
-              <div className="text-center py-8">
-                <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-300">
+              <div className="text-center py-12">
+                <div className="bg-gray-100 dark:bg-gray-800 w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <BookOpen className="w-12 h-12 text-gray-400" />
+                </div>
+                <p className="text-gray-600 dark:text-gray-300 text-lg mb-2">
                   এখনো কোনো বই আপলোড করা হয়নি
                 </p>
-                <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
                   এডমিন প্যানেল থেকে বই আপলোড করুন
                 </p>
               </div>
@@ -232,37 +277,43 @@ const HomePage = () => {
 
         {/* Features Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg">
-            <CardContent className="p-6">
-              <Brain className="w-12 h-12 text-[#00C49A] mb-4" />
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300">
+            <CardContent className="p-8 text-center">
+              <div className="bg-gradient-to-br from-green-500 to-teal-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <Brain className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
                 স্মার্ট AI সহায়তা
               </h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                 আপনার পড়াশোনার যেকোনো সমস্যার সমাধান পান AI এর মাধ্যমে
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg">
-            <CardContent className="p-6">
-              <FileQuestion className="w-12 h-12 text-[#8E24AA] mb-4" />
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300">
+            <CardContent className="p-8 text-center">
+              <div className="bg-gradient-to-br from-purple-500 to-pink-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <FileQuestion className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
                 বোর্ড প্রশ্ন ব্যাংক
               </h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                 সকল বোর্ডের বিগত বছরের প্রশ্ন এবং MCQ সংগ্রহ
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/60 dark:bg-gray-800/60 backdrop-blur-md border-white/20 shadow-lg">
-            <CardContent className="p-6">
-              <Users className="w-12 h-12 text-blue-500 mb-4" />
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white mb-2">
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:shadow-2xl transition-all duration-300">
+            <CardContent className="p-8 text-center">
+              <div className="bg-gradient-to-br from-indigo-500 to-blue-500 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg">
+                <Users className="w-8 h-8 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">
                 ইন্টারেক্টিভ শিক্ষা
               </h3>
-              <p className="text-gray-600 dark:text-gray-300">
+              <p className="text-gray-600 dark:text-gray-300 leading-relaxed">
                 মজার গেম এবং কুইজের মাধ্যমে শিখুন এবং মনে রাখুন
               </p>
             </CardContent>
