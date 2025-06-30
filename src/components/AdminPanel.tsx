@@ -153,7 +153,7 @@ const AdminPanel = () => {
   const subjects = [
     'বাংলা', 'ইংরেজি', 'গণিত', 'বিজ্ঞান', 'পদার্থবিজ্ঞান', 'রসায়ন', 
     'জীববিজ্ঞান', 'ইতিহাস', 'ভূগোল', 'পৌরনীতি', 'অর্থনীতি', 
-    'ইসলাম শিক্ষা', 'হিন্দু ধর্ম', 'বৌদ্ধ ধর্ম', 'খ্রিস্টান ধর্ম', 
+    'ইসলাম শিক্ষা', 'হিন্দু ধর্ম', 'বৌদ্ধ ধর্ম', 'খ্রিস্তান ধর্ম', 
     'কৃষিশিক্ষা', 'গার্হস্থ্য বিজ্ঞান'
   ];
 
@@ -164,40 +164,71 @@ const AdminPanel = () => {
   // Submit handlers
   const onMCQSubmit = (values: z.infer<typeof mcqFormSchema>) => {
     addMCQQuestion.mutate({
-      ...values,
-      year: values.year ? parseInt(values.year) : undefined,
+      question: values.question,
+      option_a: values.option_a,
+      option_b: values.option_b,
+      option_c: values.option_c,
+      option_d: values.option_d,
+      correct_answer: values.correct_answer,
+      subject: values.subject,
+      board: values.board || null,
+      year: values.year ? parseInt(values.year) : null,
+      chapter: values.chapter || null,
     });
     mcqForm.reset();
   };
 
   const onBoardQuestionSubmit = (values: z.infer<typeof boardQuestionFormSchema>) => {
     addBoardQuestion.mutate({
-      ...values,
+      title: values.title,
+      subject: values.subject,
+      board: values.board,
       year: parseInt(values.year),
+      file_type: values.file_type || null,
+      file_url: values.file_url || null,
     });
     boardQuestionForm.reset();
   };
 
   const onNCTBBookSubmit = (values: z.infer<typeof nctbBookFormSchema>) => {
     addNCTBBook.mutate({
-      ...values,
+      title: values.title,
+      subject: values.subject,
       class_level: parseInt(values.class_level),
+      chapter: values.chapter || null,
+      content: values.content || null,
+      file_url: values.file_url || null,
+      file_type: values.file_type || null,
     });
     nctbBookForm.reset();
   };
 
   const onNoteSubmit = (values: z.infer<typeof noteFormSchema>) => {
-    addNote.mutate(values);
+    addNote.mutate({
+      title: values.title,
+      subject: values.subject,
+      chapter: values.chapter || null,
+      content: values.content || null,
+      file_url: values.file_url || null,
+      file_type: values.file_type || null,
+    });
     noteForm.reset();
   };
 
   const onQuoteSubmit = (values: z.infer<typeof quoteFormSchema>) => {
-    addMotivationalQuote.mutate(values);
+    addMotivationalQuote.mutate({
+      quote: values.quote,
+      author: values.author || null,
+      tags: values.tags || null,
+    });
     quoteForm.reset();
   };
 
   const onApiKeySubmit = (values: z.infer<typeof apiKeyFormSchema>) => {
-    addApiKey.mutate(values);
+    addApiKey.mutate({
+      provider: values.provider,
+      api_key: values.api_key,
+    });
     apiKeyForm.reset();
   };
 
