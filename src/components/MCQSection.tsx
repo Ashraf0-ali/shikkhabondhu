@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ interface MCQQuestion {
 const MCQSection = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
   const [selectedClass, setSelectedClass] = useState<string>('all');
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [showResult, setShowResult] = useState(false);
@@ -33,31 +35,71 @@ const MCQSection = () => {
   const [timeLeft, setTimeLeft] = useState(0);
   const { toast } = useToast();
 
-  // All available subjects
-  const subjects = [
+  // Department options
+  const departments = [
+    { value: 'science', label: 'সাইন্স' },
+    { value: 'arts', label: 'আর্টস' },
+    { value: 'commerce', label: 'কমার্স' },
+    { value: 'alim', label: 'আলিম' },
+    { value: 'dakhil', label: 'দাখিল' }
+  ];
+
+  // Department-wise subjects
+  const departmentSubjects = {
+    science: ['পদার্থবিজ্ঞান', 'রসায়ন', 'জীববিজ্ঞান', 'গণিত', 'বাংলা', 'ইংরেজি', 'তথ্য ও যোগাযোগ প্রযুক্তি'],
+    arts: ['বাংলা', 'ইংরেজি', 'ইতিহাস', 'ভূগোল', 'পৌরনীতি', 'অর্থনীতি', 'ইসলাম শিক্ষা', 'হিন্দু ধর্ম', 'বৌদ্ধ ধর্ম', 'খ্রিস্তান ধর্ম'],
+    commerce: ['হিসাববিজ্ঞান', 'ব্যবসায় সংগঠন ও ব্যবস্থাপনা', 'অর্থনীতি', 'বাংলা', 'ইংরেজি', 'তথ্য ও যোগাযোগ প্রযুক্তি'],
+    alim: ['আরবি', 'ফিকহ', 'আকাইদ ও মানতিক', 'হাদিস শরীফ', 'তাফসীর শরীফ', 'বাংলা', 'ইংরেজি', 'গণিত', 'সাধারণ বিজ্ঞান'],
+    dakhil: ['আরবি', 'ইসলাম শিক্ষা', 'আল কুরআন ও তাজবীদ', 'বাংলা', 'ইংরেজি', 'গণিত', 'বিজ্ঞান', 'ইতিহাস ও সামাজিক বিজ্ঞান']
+  };
+
+  // All available subjects (combined from all departments)
+  const allSubjects = [
     'বাংলা', 'ইংরেজি', 'গণিত', 'বিজ্ঞান', 'পদার্থবিজ্ঞান', 'রসায়ন', 
     'জীববিজ্ঞান', 'ইতিহাস', 'ভূগোল', 'পৌরনীতি', 'অর্থনীতি', 
-    'ইসলাম শিক্ষা', 'হিন্দু ধর্ম', 'বৌদ্ধ ধর্ম', 'খ্রিস্টান ধর্ম', 
-    'কৃষিশিক্ষা', 'গার্হস্থ্য বিজ্ঞান'
+    'ইসলাম শিক্ষা', 'হিন্দু ধর্ম', 'বৌদ্ধ ধর্ম', 'খ্রিস্তান ধর্ম', 
+    'কৃষিশিক্ষা', 'গার্হস্থ্য বিজ্ঞান', 'তথ্য ও যোগাযোগ প্রযুক্তি',
+    'হিসাববিজ্ঞান', 'ব্যবসায় সংগঠন ও ব্যবস্থাপনা', 'আরবি', 'ফিকহ',
+    'আকাইদ ও মানতিক', 'হাদিস শরীফ', 'তাফসীর শরীফ', 'সাধারণ বিজ্ঞান',
+    'আল কুরআন ও তাজবীদ', 'ইতিহাস ও সামাজিক বিজ্ঞান'
   ];
+
+  // Get subjects based on selected department
+  const getAvailableSubjects = () => {
+    if (selectedDepartment === 'all') {
+      return allSubjects;
+    }
+    return departmentSubjects[selectedDepartment as keyof typeof departmentSubjects] || [];
+  };
 
   // Class levels
   const classLevels = [
     '৬ষ্ঠ', '৭ম', '৮ম', '৯ম', '১০ম', 'একাদশ', 'দ্বাদশ'
   ];
 
+  // Reset subject when department changes
+  useEffect(() => {
+    if (selectedDepartment !== 'all') {
+      const availableSubjects = getAvailableSubjects();
+      if (selectedSubject !== 'all' && !availableSubjects.includes(selectedSubject)) {
+        setSelectedSubject('all');
+      }
+    }
+  }, [selectedDepartment]);
+
   // Fetch MCQ questions
   const { data: mcqQuestions = [], isLoading, refetch } = useQuery({
-    queryKey: ['mcq_questions', selectedSubject, selectedClass],
+    queryKey: ['mcq_questions', selectedSubject, selectedClass, selectedDepartment],
     queryFn: async () => {
       let query = supabase.from('mcq_questions').select('*');
       
       if (selectedSubject !== 'all') {
         query = query.eq('subject', selectedSubject);
+      } else if (selectedDepartment !== 'all') {
+        // Filter by department subjects
+        const deptSubjects = getAvailableSubjects();
+        query = query.in('subject', deptSubjects);
       }
-      
-      // Filter by class if selected (this would require adding class field to MCQ table)
-      // For now, we'll just filter by subject
       
       const { data, error } = await query.order('created_at', { ascending: false });
       
@@ -206,14 +248,30 @@ const MCQSection = () => {
           <CardContent className="p-4 md:p-6">
             <div className="flex flex-col gap-4 items-start justify-between">
               <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-start md:items-center w-full">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full md:w-auto">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full md:w-auto">
+                  <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
+                    <SelectTrigger className="w-full md:w-48 bangla-text">
+                      <SelectValue placeholder="বিভাগ নির্বাচন করুন" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all" className="bangla-text">সব বিভাগ</SelectItem>
+                      {departments.map((dept) => (
+                        <SelectItem key={dept.value} value={dept.value} className="bangla-text">
+                          {dept.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
                   <Select value={selectedSubject} onValueChange={setSelectedSubject}>
                     <SelectTrigger className="w-full md:w-48 bangla-text">
                       <SelectValue placeholder="বিষয় নির্বাচন করুন" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all" className="bangla-text">সব বিষয়</SelectItem>
-                      {subjects.map((subject) => (
+                      <SelectItem value="all" className="bangla-text">
+                        {selectedDepartment === 'all' ? 'সব বিষয়' : 'বিভাগের সব বিষয়'}
+                      </SelectItem>
+                      {getAvailableSubjects().map((subject) => (
                         <SelectItem key={subject} value={subject} className="bangla-text">
                           {subject}
                         </SelectItem>
@@ -272,6 +330,13 @@ const MCQSection = () => {
                 <div className="flex items-center gap-2">
                   <span className="bangla-text">মোট প্রশ্ন: {mcqQuestions.length}</span>
                 </div>
+                {selectedDepartment !== 'all' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-600 dark:text-blue-400 bangla-text font-medium">
+                      {departments.find(d => d.value === selectedDepartment)?.label} বিভাগ
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -287,18 +352,26 @@ const MCQSection = () => {
                 কোনো MCQ পাওয়া যায়নি
               </h3>
               <p className="text-gray-600 dark:text-gray-300 mb-4 bangla-text">
-                {selectedSubject === 'all' && selectedClass === 'all'
-                  ? 'এখনো কোনো MCQ আপলোড করা হয়নি।' 
-                  : `${selectedSubject !== 'all' ? selectedSubject : ''} ${selectedClass !== 'all' ? selectedClass + ' শ্রেণির' : ''} কোনো MCQ পাওয়া যায়নি।`
+                {selectedDepartment === 'all' && selectedSubject === 'all' && selectedClass === 'all'
+                  ? 'এখনো কোনো MCQ আপলোড করা হয়নি।'
+                  : `${selectedDepartment !== 'all' ? departments.find(d => d.value === selectedDepartment)?.label + ' বিভাগের' : ''} ${selectedSubject !== 'all' ? selectedSubject : ''} ${selectedClass !== 'all' ? selectedClass + ' শ্রেণির' : ''} কোনো MCQ পাওয়া যায়নি।`
                 }
               </p>
-              <div className="flex gap-2 justify-center">
+              <div className="flex gap-2 justify-center flex-wrap">
+                {selectedDepartment !== 'all' && (
+                  <Button
+                    onClick={() => setSelectedDepartment('all')}
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white bangla-text"
+                  >
+                    সব বিভাগ দেখুন
+                  </Button>
+                )}
                 {selectedSubject !== 'all' && (
                   <Button
                     onClick={() => setSelectedSubject('all')}
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white bangla-text"
+                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white bangla-text"
                   >
-                    সব বিষয় দেখুন
+                    {selectedDepartment === 'all' ? 'সব বিষয় দেখুন' : 'বিভাগের সব বিষয় দেখুন'}
                   </Button>
                 )}
                 {selectedClass !== 'all' && (

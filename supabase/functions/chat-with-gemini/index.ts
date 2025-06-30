@@ -14,141 +14,115 @@ serve(async (req) => {
   }
 
   try {
-    const { message, conversation } = await req.json();
+    const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     
+    if (!geminiApiKey) {
+      console.error('Gemini API key not found');
+      return new Response(JSON.stringify({ 
+        error: 'Gemini API key not configured. Please add GEMINI_API_KEY to your environment variables.' 
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { message } = await req.json();
+
     // Initialize Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_ANON_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get Gemini API key from database
-    const { data: apiKeyData, error: apiKeyError } = await supabase
-      .from('api_keys')
-      .select('api_key')
-      .eq('provider', 'gemini')
-      .eq('is_active', true)
-      .single();
+    // Fetch relevant context from database
+    const [mcqResult, boardResult, nctbResult, notesResult] = await Promise.all([
+      supabase.from('mcq_questions').select('*').limit(50),
+      supabase.from('board_questions').select('*').limit(20),
+      supabase.from('nctb_books').select('*').limit(20),
+      supabase.from('notes').select('*').limit(20)
+    ]);
 
-    if (apiKeyError || !apiKeyData) {
-      throw new Error('Gemini API key not found');
+    // Build context for AI
+    let context = `আপনি একজন বাংলাদেশি শিক্ষা সহায়ক AI। আপনার কাজ হলো ছাত্রছাত্রীদের পড়াশোনায় সাহায্য করা।
+
+উপলব্ধ শিক্ষা উপকরণ:
+
+MCQ প্রশ্ন (${mcqResult.data?.length || 0}টি):`;
+
+    if (mcqResult.data && mcqResult.data.length > 0) {
+      context += `\n${mcqResult.data.slice(0, 10).map(mcq => 
+        `- ${mcq.subject}: ${mcq.question?.substring(0, 100)}...`
+      ).join('\n')}`;
     }
 
-    // Get MCQ questions for context
-    const { data: mcqData } = await supabase
-      .from('mcq_questions')
-      .select('*')
-      .limit(50);
-
-    // Get board questions for context
-    const { data: boardData } = await supabase
-      .from('board_questions')
-      .select('*')
-      .limit(20);
-
-    // Get NCTB books for context
-    const { data: booksData } = await supabase
-      .from('nctb_books')
-      .select('*')
-      .limit(20);
-
-    // Prepare context for Gemini
-    let contextInfo = "আপনি একজন বাংলাদেশি শিক্ষা সহায়ক AI। আপনার কাছে নিম্নলিখিত তথ্য রয়েছে:\n\n";
-    
-    if (mcqData && mcqData.length > 0) {
-      contextInfo += "MCQ প্রশ্নসমূহ:\n";
-      mcqData.forEach((q, i) => {
-        if (i < 10) { // Limit to prevent token overflow
-          contextInfo += `- ${q.question} (${q.subject})\n`;
-        }
-      });
-      contextInfo += "\n";
+    context += `\n\nবোর্ড প্রশ্ন (${boardResult.data?.length || 0}টি):`;
+    if (boardResult.data && boardResult.data.length > 0) {
+      context += `\n${boardResult.data.slice(0, 5).map(q => 
+        `- ${q.subject} (${q.board} বোর্ড ${q.year}): ${q.title}`
+      ).join('\n')}`;
     }
 
-    if (boardData && boardData.length > 0) {
-      contextInfo += "বোর্ড প্রশ্নসমূহ:\n";
-      boardData.forEach((q, i) => {
-        if (i < 10) {
-          contextInfo += `- ${q.title} (${q.subject}, ${q.board} বোর্ড, ${q.year})\n`;
-        }
-      });
-      contextInfo += "\n";
+    context += `\n\nNCTB বই (${nctbResult.data?.length || 0}টি):`;
+    if (nctbResult.data && nctbResult.data.length > 0) {
+      context += `\n${nctbResult.data.slice(0, 5).map(book => 
+        `- ${book.subject} (${book.class_level} শ্রেণি): ${book.title}`
+      ).join('\n')}`;
     }
 
-    if (booksData && booksData.length > 0) {
-      contextInfo += "NCTB পাঠ্যবইসমূহ:\n";
-      booksData.forEach((book, i) => {
-        if (i < 10) {
-          contextInfo += `- ${book.title} (ক্লাস ${book.class_level}, ${book.subject})\n`;
-        }
-      });
+    context += `\n\nনোট (${notesResult.data?.length || 0}টি):`;
+    if (notesResult.data && notesResult.data.length > 0) {
+      context += `\n${notesResult.data.slice(0, 5).map(note => 
+        `- ${note.subject}: ${note.title}`
+      ).join('\n')}`;
     }
 
-    // Prepare conversation history
-    const conversationHistory = conversation || [];
-    const messages = [
-      {
-        role: "user",
-        parts: [{
-          text: `${contextInfo}\n\nআপনি শিক্ষার্থীদের সাহায্য করুন। বাংলায় উত্তর দিন। প্রশ্ন: ${message}`
-        }]
-      }
-    ];
+    context += `\n\nগুরুত্বপূর্ণ নির্দেশনা:
+1. সর্বদা বাংলায় উত্তর দিন
+2. শিক্ষার্থীদের সাথে বন্ধুত্বপূর্ণ ও উৎসাহব্যঞ্জক ভাষা ব্যবহার করুন
+3. MCQ প্রশ্নের উত্তর দেওয়ার সময় ব্যাখ্যাসহ দিন
+4. জটিল বিষয়গুলো সহজ ভাষায় বুঝিয়ে দিন
+5. পড়াশোনার টিপস ও পরামর্শ দিন
+6. বাংলাদেশের শিক্ষা ব্যবস্থা অনুযায়ী উত্তর দিন
 
-    // Add conversation history
-    conversationHistory.forEach((msg: any) => {
-      messages.push({
-        role: msg.role === 'user' ? 'user' : 'model',
-        parts: [{ text: msg.content }]
-      });
-    });
+ছাত্রছাত্রীর প্রশ্ন: ${message}`;
 
     // Call Gemini API
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKeyData.api_key}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: messages,
-        generationConfig: {
-          temperature: 0.7,
-          topK: 40,
-          topP: 0.95,
-          maxOutputTokens: 1024,
-        },
-        safetySettings: [
-          {
-            category: "HARM_CATEGORY_HARASSMENT",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          },
-          {
-            category: "HARM_CATEGORY_HATE_SPEECH",
-            threshold: "BLOCK_MEDIUM_AND_ABOVE"
-          }
-        ]
+        contents: [{
+          parts: [{
+            text: context
+          }]
+        }]
       }),
     });
 
     if (!response.ok) {
+      const errorData = await response.text();
+      console.error('Gemini API error:', errorData);
       throw new Error(`Gemini API error: ${response.status}`);
     }
 
     const data = await response.json();
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'দুঃখিত, আমি এই মুহূর্তে উত্তর দিতে পারছি না।';
+    
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      throw new Error('Invalid response from Gemini API');
+    }
 
-    return new Response(JSON.stringify({ 
-      reply,
-      success: true 
-    }), {
+    const reply = data.candidates[0].content.parts[0].text;
+
+    return new Response(JSON.stringify({ reply }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
 
   } catch (error) {
     console.error('Error in chat-with-gemini function:', error);
     return new Response(JSON.stringify({ 
-      error: error.message,
-      reply: 'দুঃখিত, একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।',
-      success: false 
+      error: 'চ্যাট সংযোগে সমস্যা হয়েছে। আবার চেষ্টা করুন।',
+      details: error.message 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
