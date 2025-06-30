@@ -1,7 +1,7 @@
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap");
-@import url("https://fonts.googleapis.com/css2?family=Kalpurush&display=swap");
-@import url("https://fonts.maateen.me/solaiman-lipi/font.css");
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.maateen.me/kalpurush/font.css');
+@import url('https://fonts.maateen.me/hindusiliguri/font.css');
 
 @tailwind base;
 @tailwind components;
@@ -9,7 +9,7 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
+    --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -19,9 +19,9 @@
     --primary-foreground: 210 40% 98%;
     --secondary: 210 40% 96%;
     --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 94%;
+    --muted: 210 40% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 94%;
+    --accent: 210 40% 96%;
     --accent-foreground: 222.2 47.4% 11.2%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
@@ -70,162 +70,102 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: "Inter", sans-serif;
+    font-family: 'SutonnyMJ', 'Kalpurush', 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
-/* Bengali font styling with Shurjo Unicode Regular */
+/* Bengali Font Classes */
 .bangla-text {
-  font-family: "SolaimanLipi", "Shurjo", "Kalpurush", Arial, sans-serif;
-  font-weight: 600;
+  font-family: 'SutonnyMJ', 'Kalpurush', 'Hind Siliguri', system-ui, -apple-system, sans-serif !important;
+  font-weight: 400;
   line-height: 1.6;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.01em;
 }
 
-/* Enhanced mobile-friendly responsive design */
+.bangla-heading {
+  font-family: 'SutonnyMJ', 'Kalpurush', 'Hind Siliguri', system-ui, -apple-system, sans-serif !important;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Improved dark mode icons visibility */
+.dark svg {
+  filter: brightness(1.2) contrast(1.1);
+}
+
+.dark .text-gray-400 {
+  color: rgb(156 163 175) !important;
+}
+
+.dark .text-gray-500 {
+  color: rgb(156 163 175) !important;
+}
+
+/* Mobile responsive improvements */
 @media (max-width: 768px) {
   .bangla-text {
     font-size: 0.95rem;
     line-height: 1.5;
   }
   
-  h1.bangla-text {
-    font-size: 1.8rem;
-    line-height: 1.4;
-  }
-  
-  h2.bangla-text {
-    font-size: 1.5rem;
-    line-height: 1.4;
-  }
-  
-  h3.bangla-text {
-    font-size: 1.2rem;
-    line-height: 1.4;
+  .bangla-heading {
+    font-size: 1.1rem;
+    line-height: 1.3;
   }
 }
 
-/* Custom styles for better light mode visibility */
-.light {
-  --background: 255 255 255;
-  --foreground: 15 23 42;
-  --card: 248 250 252;
-  --card-foreground: 15 23 42;
-  --popover: 255 255 255;
-  --popover-foreground: 15 23 42;
-  --primary: 15 23 42;
-  --primary-foreground: 248 250 252;
-  --secondary: 241 245 249;
-  --secondary-foreground: 15 23 42;
-  --muted: 241 245 249;
-  --muted-foreground: 100 116 139;
-  --accent: 241 245 249;
-  --accent-foreground: 15 23 42;
-  --destructive: 239 68 68;
-  --destructive-foreground: 248 250 252;
-  --border: 226 232 240;
-  --input: 226 232 240;
-  --ring: 15 23 42;
+/* Line clamp utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* Fix bottom navigation visibility - CRITICAL FIX */
-.fixed.bottom-0 {
-  z-index: 9999 !important;
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 
-/* Ensure navigation is always visible */
-nav[role="navigation"] {
-  z-index: 9999 !important;
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(20px) !important;
-  border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+/* Better scrollbar for mobile */
+::-webkit-scrollbar {
+  width: 6px;
 }
 
-/* Dark mode navigation */
-.dark nav[role="navigation"] {
-  background: rgba(0, 0, 0, 0.95) !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.1) !important;
+::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-/* Ensure buttons are visible */
-.bg-gradient-to-r {
-  position: relative;
-  z-index: 10;
+::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 3px;
 }
 
-/* Better backdrop blur for cards */
-.backdrop-blur-md {
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.backdrop-blur-sm {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+/* Admin panel icon improvements */
+.dark .lucide-upload,
+.dark .lucide-file-text,
+.dark .lucide-book-open,
+.dark .lucide-message-square,
+.dark .lucide-key,
+.dark .lucide-settings {
+  color: rgb(209 213 219) !important;
+  filter: brightness(1) contrast(1);
 }
 
-/* Improved button visibility */
-button {
-  position: relative;
-  z-index: 10;
+/* Button icon visibility in dark mode */
+.dark button svg {
+  color: inherit !important;
+  filter: none !important;
 }
 
-/* Fix for upload buttons - CRITICAL FIX */
-input[type="file"] + button,
-.upload-section button,
-.admin-upload-btn {
-  margin-bottom: 1rem !important;
-  padding: 0.75rem 1.5rem !important;
-  min-height: 2.5rem !important;
-  z-index: 50 !important;
-  position: relative !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: linear-gradient(to right, #3b82f6, #8b5cf6) !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 0.5rem !important;
-  font-weight: 600 !important;
-  transition: all 0.3s ease !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-input[type="file"] + button:hover,
-.upload-section button:hover,
-.admin-upload-btn:hover {
-  background: linear-gradient(to right, #2563eb, #7c3aed) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Ensure main content doesn't overlap with fixed navigation */
-main {
-  padding-bottom: 5rem !important;
-}
-
-/* Admin panel specific fixes */
-.admin-panel {
-  padding-bottom: 6rem !important;
-}
-
-/* Mobile responsive improvements */
-@media (max-width: 640px) {
-  .admin-upload-btn {
-    width: 100% !important;
-    margin: 0.5rem 0 !important;
-  }
-  
-  .grid {
-    gap: 1rem !important;
-  }
-  
-  .card-content {
-    padding: 1rem !important;
-  }
+.dark .bg-blue-500,
+.dark .bg-green-500,
+.dark .bg-purple-500 {
+  filter: brightness(1.1);
 }

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +23,7 @@ interface MCQQuestion {
 
 const MCQSection = () => {
   const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  const [selectedClass, setSelectedClass] = useState<string>('all');
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [showResult, setShowResult] = useState(false);
@@ -41,15 +41,23 @@ const MCQSection = () => {
     'কৃষিশিক্ষা', 'গার্হস্থ্য বিজ্ঞান'
   ];
 
+  // Class levels
+  const classLevels = [
+    '৬ষ্ঠ', '৭ম', '৮ম', '৯ম', '১০ম', 'একাদশ', 'দ্বাদশ'
+  ];
+
   // Fetch MCQ questions
   const { data: mcqQuestions = [], isLoading, refetch } = useQuery({
-    queryKey: ['mcq_questions', selectedSubject],
+    queryKey: ['mcq_questions', selectedSubject, selectedClass],
     queryFn: async () => {
       let query = supabase.from('mcq_questions').select('*');
       
       if (selectedSubject !== 'all') {
         query = query.eq('subject', selectedSubject);
       }
+      
+      // Filter by class if selected (this would require adding class field to MCQ table)
+      // For now, we'll just filter by subject
       
       const { data, error } = await query.order('created_at', { ascending: false });
       
@@ -109,7 +117,7 @@ const MCQSection = () => {
       setSelectedAnswer('');
       setShowResult(false);
       if (quizMode) {
-        setTimeLeft(30); // 30 seconds per question
+        setTimeLeft(30);
       }
     } else {
       toast({
@@ -196,21 +204,37 @@ const MCQSection = () => {
         {/* Controls */}
         <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
           <CardContent className="p-4 md:p-6">
-            <div className="flex flex-col md:flex-row gap-4 md:gap-6 items-start md:items-center justify-between">
-              <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-start md:items-center">
-                <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                  <SelectTrigger className="w-full md:w-48 bangla-text">
-                    <SelectValue placeholder="বিষয় নির্বাচন করুন" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all" className="bangla-text">সব বিষয়</SelectItem>
-                    {subjects.map((subject) => (
-                      <SelectItem key={subject} value={subject} className="bangla-text">
-                        {subject}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <div className="flex flex-col gap-4 items-start justify-between">
+              <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-start md:items-center w-full">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 w-full md:w-auto">
+                  <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                    <SelectTrigger className="w-full md:w-48 bangla-text">
+                      <SelectValue placeholder="বিষয় নির্বাচন করুন" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all" className="bangla-text">সব বিষয়</SelectItem>
+                      {subjects.map((subject) => (
+                        <SelectItem key={subject} value={subject} className="bangla-text">
+                          {subject}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  <Select value={selectedClass} onValueChange={setSelectedClass}>
+                    <SelectTrigger className="w-full md:w-48 bangla-text">
+                      <SelectValue placeholder="শ্রেণি নির্বাচন করুন" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all" className="bangla-text">সব শ্রেণি</SelectItem>
+                      {classLevels.map((classLevel) => (
+                        <SelectItem key={classLevel} value={classLevel} className="bangla-text">
+                          {classLevel} শ্রেণি
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
                 
                 <div className="flex gap-2">
                   <Button
@@ -234,7 +258,7 @@ const MCQSection = () => {
               </div>
 
               {/* Stats */}
-              <div className="flex gap-4 text-sm">
+              <div className="flex flex-wrap gap-4 text-sm">
                 <div className="flex items-center gap-2">
                   <Trophy className="w-4 h-4 text-yellow-500" />
                   <span className="bangla-text">স্কোর: {score}/{answeredQuestions.size}</span>
@@ -245,6 +269,9 @@ const MCQSection = () => {
                     <span className="bangla-text font-mono">{formatTime(timeLeft)}</span>
                   </div>
                 )}
+                <div className="flex items-center gap-2">
+                  <span className="bangla-text">মোট প্রশ্ন: {mcqQuestions.length}</span>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -260,19 +287,30 @@ const MCQSection = () => {
                 কোনো MCQ পাওয়া যায়নি
               </h3>
               <p className="text-gray-600 dark:text-gray-300 mb-4 bangla-text">
-                {selectedSubject === 'all' 
+                {selectedSubject === 'all' && selectedClass === 'all'
                   ? 'এখনো কোনো MCQ আপলোড করা হয়নি।' 
-                  : `${selectedSubject} বিষয়ের কোনো MCQ পাওয়া যায়নি।`
+                  : `${selectedSubject !== 'all' ? selectedSubject : ''} ${selectedClass !== 'all' ? selectedClass + ' শ্রেণির' : ''} কোনো MCQ পাওয়া যায়নি।`
                 }
               </p>
-              {selectedSubject !== 'all' && (
-                <Button
-                  onClick={() => setSelectedSubject('all')}
-                  className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white bangla-text"
-                >
-                  সব বিষয় দেখুন
-                </Button>
-              )}
+              <div className="flex gap-2 justify-center">
+                {selectedSubject !== 'all' && (
+                  <Button
+                    onClick={() => setSelectedSubject('all')}
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white bangla-text"
+                  >
+                    সব বিষয় দেখুন
+                  </Button>
+                )}
+                {selectedClass !== 'all' && (
+                  <Button
+                    onClick={() => setSelectedClass('all')}
+                    variant="outline"
+                    className="bangla-text"
+                  >
+                    সব শ্রেণি দেখুন
+                  </Button>
+                )}
+              </div>
             </CardContent>
           </Card>
         ) : (
