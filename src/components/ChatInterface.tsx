@@ -1,286 +1,232 @@
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
+import React, { useState, useEffect, useRef } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Bot, User, Upload, Image } from 'lucide-react';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Send, Bot, User, Loader2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface Message {
   id: string;
-  text: string;
-  sender: 'user' | 'bot';
+  content: string;
+  role: 'user' | 'assistant';
   timestamp: Date;
-  attachments?: { type: 'image' | 'pdf'; url: string; name: string }[];
 }
 
 const ChatInterface = () => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: 'আসসালামু আলাইকুম! 😊 আমি তোমার শিক্ষা বন্ধু AI। যেকোনো পড়াশোনার সমস্যায় আমাকে জিজ্ঞেস করতে পারো। তুমি PDF বা ছবিও আপলোড করতে পারো।',
-      sender: 'bot',
-      timestamp: new Date()
-    }
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
-  const [isTyping, setIsTyping] = useState(false);
-  const [isThinking, setIsThinking] = useState(false);
-  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
+  // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    scrollToBottom();
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
+    }
   }, [messages]);
 
-  const getMotivationalQuote = () => {
-    const quotes = [
-      "📖 পড়া কখনো বৃথা যায় না — সে আজ হোক, না কাল।",
-      "💪 সফলতার জন্য ধৈর্য ও অধ্যবসায় প্রয়োজন।",
-      "🌟 তুমি যা ভাবো তার চেয়ে বেশি সক্ষম।",
-      "🎯 লক্ষ্য নির্ধারণ করো, তারপর সে লক্ষ্যে পৌঁছানোর জন্য কাজ করো।",
-      "📚 প্রতিদিন একটু একটু করে পড়লেই বিরাট পরিবর্তন আসবে।"
-    ];
-    
-    const storedQuotes = JSON.parse(localStorage.getItem('motivationalQuotes') || '[]');
-    const allQuotes = [...quotes, ...storedQuotes.map((q: any) => q.quote)];
-    
-    return allQuotes[Math.floor(Math.random() * allQuotes.length)];
-  };
+  // Initial welcome message
+  useEffect(() => {
+    setMessages([{
+      id: '1',
+      content: 'আসসালামু আলাইকুম! আমি আপনার শিক্ষা সহায়ক AI। আপনার যেকোনো পড়াশোনার প্রশ্ন করতে পারেন। আমি MCQ, বোর্ড প্রশ্ন, এবং পাঠ্যবই নিয়ে সাহায্য করতে পারি।',
+      role: 'assistant',
+      timestamp: new Date()
+    }]);
+  }, []);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files || []);
-    const validFiles = files.filter(file => 
-      file.type.includes('image') || file.type.includes('pdf')
-    );
-    setAttachedFiles(prev => [...prev, ...validFiles]);
-  };
-
-  const removeAttachment = (index: number) => {
-    setAttachedFiles(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const handleSendMessage = async () => {
-    if (!inputMessage.trim() && attachedFiles.length === 0) return;
+  const sendMessage = async () => {
+    if (!inputMessage.trim() || isLoading) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: inputMessage || "📎 File uploaded",
-      sender: 'user',
-      timestamp: new Date(),
-      attachments: attachedFiles.map(file => ({
-        type: file.type.includes('image') ? 'image' : 'pdf',
-        url: URL.createObjectURL(file),
-        name: file.name
-      }))
+      content: inputMessage,
+      role: 'user',
+      timestamp: new Date()
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
-    setAttachedFiles([]);
-    setIsTyping(true);
+    setIsLoading(true);
 
-    // Check if we need to show motivational quote
-    const shouldShowQuote = Math.random() < 0.3; // 30% chance
+    try {
+      // Call Gemini edge function
+      const { data, error } = await supabase.functions.invoke('chat-with-gemini', {
+        body: {
+          message: inputMessage,
+          conversation: messages.slice(-5) // Send last 5 messages for context
+        }
+      });
 
-    // Simulate thinking process for complex queries
-    if (inputMessage.length > 50 || attachedFiles.length > 0) {
-      setIsThinking(true);
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      setIsThinking(false);
-    }
+      if (error) throw error;
 
-    setTimeout(() => {
-      let botResponse = getBotResponse(inputMessage, attachedFiles.length > 0);
-      
-      if (shouldShowQuote) {
-        botResponse += `\n\n✨ ${getMotivationalQuote()}`;
-      }
-
-      const botMessage: Message = {
+      const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: botResponse,
-        sender: 'bot',
+        content: data.reply || 'দুঃখিত, আমি এই মুহূর্তে উত্তর দিতে পারছি না।',
+        role: 'assistant',
         timestamp: new Date()
       };
-      setMessages(prev => [...prev, botMessage]);
-      setIsTyping(false);
-    }, 1500);
+
+      setMessages(prev => [...prev, assistantMessage]);
+
+    } catch (error) {
+      console.error('Chat error:', error);
+      toast({
+        title: "চ্যাট এরর",
+        description: "চ্যাট সংযোগে সমস্যা হয়েছে। আবার চেষ্টা করুন।",
+        variant: "destructive"
+      });
+
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        content: 'দুঃখিত, একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।',
+        role: 'assistant',
+        timestamp: new Date()
+      };
+
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const getBotResponse = (userInput: string, hasAttachment: boolean): string => {
-    const input = userInput.toLowerCase();
-    
-    if (hasAttachment) {
-      return '📄 আমি তোমার ফাইলটি বিশ্লেষণ করছি... যেকোনো প্রশ্ন থাকলে জিজ্ঞেস করো! 🤔';
-    } else if (input.includes('mcq') || input.includes('প্রশ্ন')) {
-      return '📊 তোমার জন্য কিছু MCQ প্রশ্ন তৈরি করছি... কোন বিষয় এবং কোন অধ্যায় থেকে চাও?';
-    } else if (input.includes('অধ্যায়') || input.includes('chapter')) {
-      return '📚 কোন ক্লাস এবং কোন বিষয়ের অধ্যায় সম্পর্কে জানতে চাও? আমি সাহায্য করতে পারি।';
-    } else if (input.includes('ধন্যবাদ') || input.includes('thanks')) {
-      return '😊 তোমার কোনো প্রশ্ন থাকলে জিজ্ঞেস করো। পড়াশোনায় সফল হও! 💪';
-    } else if (input.includes('tired') || input.includes('ক্লান্ত')) {
-      return `🌟 ${getMotivationalQuote()}\n\nআরাম করো, তারপর আবার চেষ্টা করো!`;
-    } else {
-      // Simulate Google search for missing data
-      return '🔍 এই তথ্যটি এখনো সিস্টেমে যোগ হয়নি। Google থেকে খোঁজ করে তোমাকে সাহায্য করার চেষ্টা করছি... 🤔';
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessage();
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-cyan-50 dark:from-gray-900 dark:to-gray-800 p-4">
-      <div className="max-w-4xl mx-auto">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4 pb-24">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <Card className="mb-4 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20">
-          <CardContent className="p-4">
-            <h1 className="text-2xl font-bold text-center text-gray-800 dark:text-white">
-              📚 পড়া শিখি - Student Chat
-            </h1>
-          </CardContent>
+        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
+          <CardHeader className="text-center py-6">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent mb-2 bangla-text">
+              🤖 AI শিক্ষক
+            </CardTitle>
+            <p className="text-gray-600 dark:text-gray-300 bangla-text">
+              আপনার ব্যক্তিগত পড়াশোনার সহায়ক
+            </p>
+          </CardHeader>
         </Card>
 
-        {/* Messages */}
-        <Card className="h-[60vh] bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20 mb-4">
-          <CardContent className="p-4 h-full overflow-y-auto">
-            <div className="space-y-4">
+        {/* Chat Messages */}
+        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
+          <CardContent className="p-0">
+            <ScrollArea 
+              ref={scrollAreaRef}
+              className="h-[500px] p-6 space-y-4"
+            >
               {messages.map((message) => (
                 <div
                   key={message.id}
-                  className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                  className={`flex items-start gap-3 ${
+                    message.role === 'user' ? 'flex-row-reverse' : ''
+                  }`}
                 >
-                  <div
-                    className={`max-w-[80%] p-3 rounded-lg ${
-                      message.sender === 'user'
-                        ? 'bg-[#FCE4EC] text-gray-800 ml-auto'
-                        : 'bg-[#E0F2F1] text-gray-800'
-                    }`}
-                  >
-                    <div className="flex items-start space-x-2">
-                      {message.sender === 'bot' && (
-                        <Bot className="w-5 h-5 text-[#00C49A] mt-0.5 flex-shrink-0" />
-                      )}
-                      {message.sender === 'user' && (
-                        <User className="w-5 h-5 text-[#8E24AA] mt-0.5 flex-shrink-0" />
-                      )}
-                      <div className="flex-1">
-                        <p className="text-sm whitespace-pre-line">{message.text}</p>
-                        {message.attachments && (
-                          <div className="mt-2 space-y-1">
-                            {message.attachments.map((attachment, index) => (
-                              <div key={index} className="flex items-center space-x-2 text-xs bg-white/50 p-2 rounded">
-                                {attachment.type === 'image' ? (
-                                  <Image className="w-4 h-4" />
-                                ) : (
-                                  <Upload className="w-4 h-4" />
-                                )}
-                                <span>{attachment.name}</span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+                    message.role === 'user' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-purple-500 text-white'
+                  }`}>
+                    {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                  </div>
+                  <div className={`flex-1 max-w-[80%] ${message.role === 'user' ? 'text-right' : ''}`}>
+                    <div className={`rounded-2xl px-4 py-3 ${
+                      message.role === 'user'
+                        ? 'bg-blue-500 text-white ml-8'
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 mr-8'
+                    }`}>
+                      <p className="whitespace-pre-wrap bangla-text leading-relaxed">
+                        {message.content}
+                      </p>
                     </div>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 mt-1 px-2">
                       {message.timestamp.toLocaleTimeString()}
                     </p>
                   </div>
                 </div>
               ))}
-              
-              {isThinking && (
-                <div className="flex justify-start">
-                  <div className="bg-[#E0F2F1] p-3 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <Bot className="w-5 h-5 text-[#00C49A]" />
-                      <div className="text-sm">🤔 Thinking...</div>
-                    </div>
+              {isLoading && (
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center">
+                    <Bot className="w-4 h-4" />
                   </div>
-                </div>
-              )}
-              
-              {isTyping && !isThinking && (
-                <div className="flex justify-start">
-                  <div className="bg-[#E0F2F1] p-3 rounded-lg">
-                    <div className="flex items-center space-x-2">
-                      <Bot className="w-5 h-5 text-[#00C49A]" />
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 bg-[#00C49A] rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-[#00C49A] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                        <div className="w-2 h-2 bg-[#00C49A] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="flex-1 max-w-[80%]">
+                    <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl px-4 py-3 mr-8">
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span className="text-gray-600 dark:text-gray-300 bangla-text">
+                          চিন্তা করছি...
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
               )}
-              <div ref={messagesEndRef} />
+            </ScrollArea>
+          </CardContent>
+        </Card>
+
+        {/* Input Area */}
+        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
+          <CardContent className="p-4">
+            <div className="flex gap-3">
+              <Input
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="আপনার প্রশ্ন লিখুন..."
+                className="flex-1 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:ring-blue-500 bangla-text"
+                disabled={isLoading}
+              />
+              <Button
+                onClick={sendMessage}
+                disabled={isLoading || !inputMessage.trim()}
+                className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg"
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>
 
-        {/* File Attachments Preview */}
-        {attachedFiles.length > 0 && (
-          <Card className="mb-4 bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20">
-            <CardContent className="p-3">
-              <div className="flex flex-wrap gap-2">
-                {attachedFiles.map((file, index) => (
-                  <div key={index} className="flex items-center space-x-2 bg-[#00C49A]/10 p-2 rounded-lg">
-                    {file.type.includes('image') ? (
-                      <Image className="w-4 h-4 text-[#00C49A]" />
-                    ) : (
-                      <Upload className="w-4 h-4 text-[#00C49A]" />
-                    )}
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{file.name}</span>
-                    <button
-                      onClick={() => removeAttachment(index)}
-                      className="text-red-500 hover:text-red-700"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Input */}
-        <Card className="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20">
+        {/* Quick Suggestions */}
+        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
           <CardContent className="p-4">
-            <div className="flex space-x-2">
-              <Button
-                onClick={() => fileInputRef.current?.click()}
-                variant="outline"
-                size="icon"
-                className="border-[#00C49A] text-[#00C49A] hover:bg-[#00C49A] hover:text-white"
-              >
-                <Upload className="w-4 h-4" />
-              </Button>
-              <Input
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                placeholder="এখানে তোমার প্রশ্ন লিখো..."
-                className="flex-1 bg-white/50 dark:bg-gray-700/50 border-white/20"
-                onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-              />
-              <Button
-                onClick={handleSendMessage}
-                className="bg-gradient-to-r from-[#00C49A] to-[#8E24AA] hover:from-[#00A085] hover:to-[#7B1FA2] text-white px-6"
-              >
-                <Send className="w-4 h-4" />
-              </Button>
+            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3 bangla-text">
+              দ্রুত প্রশ্ন:
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+              {[
+                "গণিতের একটি সমস্যা সমাধান করুন",
+                "ইংরেজি গ্রামার ব্যাখ্যা করুন",
+                "বিজ্ঞানের একটি ধারণা বুঝিয়ে দিন",
+                "ইতিহাসের একটি ঘটনা বলুন",
+                "MCQ সমাধানের কৌশল",
+                "পরীক্ষার প্রস্তুতির টিপস"
+              ].map((suggestion, index) => (
+                <Button
+                  key={index}
+                  variant="outline"
+                  onClick={() => setInputMessage(suggestion)}
+                  className="text-left justify-start h-auto py-2 px-3 text-sm bangla-text hover:bg-blue-50 dark:hover:bg-gray-700"
+                  disabled={isLoading}
+                >
+                  {suggestion}
+                </Button>
+              ))}
             </div>
-            <input
-              ref={fileInputRef}
-              type="file"
-              multiple
-              accept="image/*,.pdf"
-              onChange={handleFileSelect}
-              className="hidden"
-            />
           </CardContent>
         </Card>
       </div>
