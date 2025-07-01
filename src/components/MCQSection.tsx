@@ -2,10 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { CheckCircle2, XCircle, RefreshCw, BookOpen, Users, GraduationCap } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { CheckCircle, XCircle, RotateCcw, Trophy, Clock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface MCQQuestion {
@@ -17,491 +18,437 @@ interface MCQQuestion {
   option_d: string;
   correct_answer: string;
   subject: string;
+  chapter?: string;
   board?: string;
   year?: number;
-  chapter?: string;
 }
 
 const MCQSection = () => {
-  const [selectedSubject, setSelectedSubject] = useState<string>('all');
-  const [selectedClass, setSelectedClass] = useState<string>('all');
-  const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [selectedDepartment, setSelectedDepartment] = useState<string>('');
+  const [selectedClass, setSelectedClass] = useState<string>('');
+  const [selectedSubject, setSelectedSubject] = useState<string>('');
+  const [currentQuestion, setCurrentQuestion] = useState<MCQQuestion | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<string>('');
   const [showResult, setShowResult] = useState(false);
-  const [score, setScore] = useState(0);
-  const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
-  const [quizMode, setQuizMode] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(0);
+  const [score, setScore] = useState({ correct: 0, total: 0 });
+  const [availableSubjects, setAvailableSubjects] = useState<string[]>([]);
   const { toast } = useToast();
 
-  // Department options
   const departments = [
-    { value: 'science', label: 'সাইন্স' },
-    { value: 'arts', label: 'আর্টস' },
-    { value: 'commerce', label: 'কমার্স' },
-    { value: 'alim', label: 'আলিম' },
-    { value: 'dakhil', label: 'দাখিল' }
+    { value: 'science', label: 'বিজ্ঞান বিভাগ', icon: '🔬' },
+    { value: 'arts', label: 'মানবিক বিভাগ', icon: '📚' },
+    { value: 'commerce', label: 'ব্যবসায় শিক্ষা বিভাগ', icon: '💼' },
+    { value: 'alim', label: 'আলিম', icon: '🕌' },
+    { value: 'dakhil', label: 'দাখিল', icon: '📖' }
   ];
 
-  // Department-wise subjects
-  const departmentSubjects = {
-    science: ['পদার্থবিজ্ঞান', 'রসায়ন', 'জীববিজ্ঞান', 'গণিত', 'বাংলা', 'ইংরেজি', 'তথ্য ও যোগাযোগ প্রযুক্তি'],
-    arts: ['বাংলা', 'ইংরেজি', 'ইতিহাস', 'ভূগোল', 'পৌরনীতি', 'অর্থনীতি', 'ইসলাম শিক্ষা', 'হিন্দু ধর্ম', 'বৌদ্ধ ধর্ম', 'খ্রিস্তান ধর্ম'],
-    commerce: ['হিসাববিজ্ঞান', 'ব্যবসায় সংগঠন ও ব্যবস্থাপনা', 'অর্থনীতি', 'বাংলা', 'ইংরেজি', 'তথ্য ও যোগাযোগ প্রযুক্তি'],
-    alim: ['আরবি', 'ফিকহ', 'আকাইদ ও মানতিক', 'হাদিস শরীফ', 'তাফসীর শরীফ', 'বাংলা', 'ইংরেজি', 'গণিত', 'সাধারণ বিজ্ঞান'],
-    dakhil: ['আরবি', 'ইসলাম শিক্ষা', 'আল কুরআন ও তাজবীদ', 'বাংলা', 'ইংরেজি', 'গণিত', 'বিজ্ঞান', 'ইতিহাস ও সামাজিক বিজ্ঞান']
-  };
-
-  // All available subjects (combined from all departments)
-  const allSubjects = [
-    'বাংলা', 'ইংরেজি', 'গণিত', 'বিজ্ঞান', 'পদার্থবিজ্ঞান', 'রসায়ন', 
-    'জীববিজ্ঞান', 'ইতিহাস', 'ভূগোল', 'পৌরনীতি', 'অর্থনীতি', 
-    'ইসলাম শিক্ষা', 'হিন্দু ধর্ম', 'বৌদ্ধ ধর্ম', 'খ্রিস্তান ধর্ম', 
-    'কৃষিশিক্ষা', 'গার্হস্থ্য বিজ্ঞান', 'তথ্য ও যোগাযোগ প্রযুক্তি',
-    'হিসাববিজ্ঞান', 'ব্যবসায় সংগঠন ও ব্যবস্থাপনা', 'আরবি', 'ফিকহ',
-    'আকাইদ ও মানতিক', 'হাদিস শরীফ', 'তাফসীর শরীফ', 'সাধারণ বিজ্ঞান',
-    'আল কুরআন ও তাজবীদ', 'ইতিহাস ও সামাজিক বিজ্ঞান'
-  ];
-
-  // Get subjects based on selected department
-  const getAvailableSubjects = () => {
-    if (selectedDepartment === 'all') {
-      return allSubjects;
-    }
-    return departmentSubjects[selectedDepartment as keyof typeof departmentSubjects] || [];
-  };
-
-  // Class levels
   const classLevels = [
-    '৬ষ্ঠ', '৭ম', '৮ম', '৯ম', '১০ম', 'একাদশ', 'দ্বাদশ'
+    { value: '6', label: 'ষষ্ঠ শ্রেণি' },
+    { value: '7', label: 'সপ্তম শ্রেণি' },
+    { value: '8', label: 'অষ্টম শ্রেণি' },
+    { value: '9', label: 'নবম শ্রেণি' },
+    { value: '10', label: 'দশম শ্রেণি' },
+    { value: '11', label: 'একাদশ শ্রেণি' },
+    { value: '12', label: 'দ্বাদশ শ্রেণি' }
   ];
 
-  // Reset subject when department changes
-  useEffect(() => {
-    if (selectedDepartment !== 'all') {
-      const availableSubjects = getAvailableSubjects();
-      if (selectedSubject !== 'all' && !availableSubjects.includes(selectedSubject)) {
-        setSelectedSubject('all');
-      }
-    }
-  }, [selectedDepartment]);
-
-  // Fetch MCQ questions
-  const { data: mcqQuestions = [], isLoading, refetch } = useQuery({
-    queryKey: ['mcq_questions', selectedSubject, selectedClass, selectedDepartment],
+  // Fetch available subjects based on department and class
+  const { data: subjectsData } = useQuery({
+    queryKey: ['subjects', selectedDepartment, selectedClass],
     queryFn: async () => {
-      let query = supabase.from('mcq_questions').select('*');
+      if (!selectedDepartment || !selectedClass) return [];
       
-      if (selectedSubject !== 'all') {
-        query = query.eq('subject', selectedSubject);
-      } else if (selectedDepartment !== 'all') {
-        // Filter by department subjects
-        const deptSubjects = getAvailableSubjects();
-        query = query.in('subject', deptSubjects);
+      let query = supabase
+        .from('mcq_questions')
+        .select('subject')
+        .not('subject', 'is', null);
+
+      // Add department-based filtering if needed
+      if (selectedDepartment === 'alim' || selectedDepartment === 'dakhil') {
+        query = query.ilike('board', `%${selectedDepartment}%`);
       }
+
+      const { data, error } = await query;
       
-      const { data, error } = await query.order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      return data as MCQQuestion[];
+      if (error) {
+        console.error('Error fetching subjects:', error);
+        return [];
+      }
+
+      const uniqueSubjects = [...new Set(data?.map(item => item.subject) || [])];
+      return uniqueSubjects.filter(Boolean);
     },
+    enabled: !!selectedDepartment && !!selectedClass
   });
 
-  // Timer for quiz mode
+  // Update available subjects when data changes
   useEffect(() => {
-    if (quizMode && timeLeft > 0) {
-      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
-      return () => clearTimeout(timer);
-    } else if (quizMode && timeLeft === 0 && !showResult) {
-      handleSubmitAnswer();
+    if (subjectsData) {
+      setAvailableSubjects(subjectsData);
     }
-  }, [timeLeft, quizMode]);
+  }, [subjectsData]);
 
-  const currentQuestion = mcqQuestions[currentQuestionIndex];
+  // Fetch MCQ questions based on filters
+  const { data: mcqQuestions, refetch: refetchQuestions } = useQuery({
+    queryKey: ['mcq-questions', selectedDepartment, selectedClass, selectedSubject],
+    queryFn: async () => {
+      if (!selectedDepartment || !selectedClass || !selectedSubject) return [];
+      
+      let query = supabase
+        .from('mcq_questions')
+        .select('*')
+        .eq('subject', selectedSubject)
+        .not('question', 'is', null)
+        .not('correct_answer', 'is', null);
 
-  const handleAnswerSelect = (answer: string) => {
-    setSelectedAnswer(answer);
-  };
+      // Add department-based filtering
+      if (selectedDepartment === 'alim' || selectedDepartment === 'dakhil') {
+        query = query.ilike('board', `%${selectedDepartment}%`);
+      }
 
-  const handleSubmitAnswer = () => {
-    if (!selectedAnswer && !showResult) {
+      const { data, error } = await query;
+      
+      if (error) {
+        console.error('Error fetching MCQ questions:', error);
+        toast({
+          title: "ত্রুটি",
+          description: "প্রশ্ন লোড করতে সমস্যা হয়েছে।",
+          variant: "destructive"
+        });
+        return [];
+      }
+
+      return data || [];
+    },
+    enabled: !!selectedDepartment && !!selectedClass && !!selectedSubject
+  });
+
+  const startNewQuestion = () => {
+    if (!mcqQuestions || mcqQuestions.length === 0) {
       toast({
-        title: "উত্তর নির্বাচন করুন",
-        description: "একটি উত্তর নির্বাচন করে তারপর জমা দিন।",
+        title: "কোনো প্রশ্ন পাওয়া যায়নি",
+        description: "এই বিভাগ ও বিষয়ের জন্য কোনো প্রশ্ন নেই।",
         variant: "destructive"
       });
       return;
     }
 
+    const randomQuestion = mcqQuestions[Math.floor(Math.random() * mcqQuestions.length)];
+    setCurrentQuestion(randomQuestion);
+    setSelectedAnswer('');
+    setShowResult(false);
+  };
+
+  const handleAnswerSubmit = () => {
+    if (!selectedAnswer || !currentQuestion) return;
+
+    const isCorrect = selectedAnswer === currentQuestion.correct_answer;
     setShowResult(true);
-    
-    if (selectedAnswer === currentQuestion?.correct_answer) {
-      setScore(score + 1);
+    setScore(prev => ({
+      correct: prev.correct + (isCorrect ? 1 : 0),
+      total: prev.total + 1
+    }));
+
+    if (isCorrect) {
       toast({
         title: "সঠিক উত্তর! 🎉",
-        description: "চমৎকার! আপনার উত্তর সঠিক।",
+        description: "অভিনন্দন! আপনার উত্তর সঠিক।"
       });
     } else {
       toast({
-        title: "ভুল উত্তর 😞",
-        description: `সঠিক উত্তর: ${getOptionText(currentQuestion?.correct_answer)}`,
+        title: "ভুল উত্তর",
+        description: `সঠিক উত্তর: ${currentQuestion.correct_answer}`,
         variant: "destructive"
       });
     }
-
-    setAnsweredQuestions(prev => new Set(prev).add(currentQuestionIndex));
   };
 
-  const handleNextQuestion = () => {
-    if (currentQuestionIndex < mcqQuestions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-      setSelectedAnswer('');
-      setShowResult(false);
-      if (quizMode) {
-        setTimeLeft(30);
-      }
-    } else {
-      toast({
-        title: "কুইজ শেষ!",
-        description: `আপনার স্কোর: ${score}/${mcqQuestions.length}`,
-      });
-    }
-  };
-
-  const handlePreviousQuestion = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-      setSelectedAnswer('');
-      setShowResult(false);
-      if (quizMode) {
-        setTimeLeft(30);
-      }
-    }
-  };
-
-  const resetQuiz = () => {
-    setCurrentQuestionIndex(0);
+  const resetGame = () => {
+    setScore({ correct: 0, total: 0 });
+    setCurrentQuestion(null);
     setSelectedAnswer('');
     setShowResult(false);
-    setScore(0);
-    setAnsweredQuestions(new Set());
-    setQuizMode(false);
-    setTimeLeft(0);
   };
 
-  const startQuizMode = () => {
-    setQuizMode(true);
-    setTimeLeft(30);
-    resetQuiz();
-    toast({
-      title: "কুইজ মোড শুরু!",
-      description: "প্রতিটি প্রশ্নের জন্য ৩০ সেকেন্ড সময়।",
-    });
-  };
-
-  const getOptionText = (option: string) => {
-    if (!currentQuestion) return '';
-    switch (option) {
-      case 'A': return currentQuestion.option_a;
-      case 'B': return currentQuestion.option_b;
-      case 'C': return currentQuestion.option_c;
-      case 'D': return currentQuestion.option_d;
-      default: return '';
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
-
-  if (isLoading) {
+  if (!selectedDepartment || !selectedClass || !selectedSubject) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4 pb-24 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-300 text-lg bangla-text">MCQ লোড হচ্ছে...</p>
-        </div>
-      </div>
-    );
-  }
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4">
+        <div className="max-w-4xl mx-auto space-y-6">
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
+            <CardHeader className="text-center py-8">
+              <CardTitle className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent mb-4 bangla-text">
+                📝 MCQ প্র্যাকটিস
+              </CardTitle>
+              <p className="text-gray-600 dark:text-gray-300 text-lg bangla-text">
+                আপনার বিভাগ, শ্রেণি এবং বিষয় নির্বাচন করুন
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6 p-8">
+              {/* Department Selection */}
+              <div className="space-y-3">
+                <label className="text-lg font-semibold text-gray-700 dark:text-gray-300 bangla-text flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  বিভাগ নির্বাচন করুন
+                </label>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                  {departments.map((dept) => (
+                    <Button
+                      key={dept.value}
+                      variant={selectedDepartment === dept.value ? "default" : "outline"}
+                      onClick={() => {
+                        setSelectedDepartment(dept.value);
+                        setSelectedClass('');
+                        setSelectedSubject('');
+                      }}
+                      className="h-16 text-left justify-start p-4 bangla-text"
+                    >
+                      <span className="text-2xl mr-3">{dept.icon}</span>
+                      <span className="font-medium">{dept.label}</span>
+                    </Button>
+                  ))}
+                </div>
+              </div>
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4 pb-24">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
-          <CardHeader className="text-center py-6">
-            <CardTitle className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 bg-clip-text text-transparent mb-2 bangla-text">
-              📝 MCQ প্র্যাকটিস
-            </CardTitle>
-            <p className="text-gray-600 dark:text-gray-300 text-base md:text-lg bangla-text">
-              বিভিন্ন বিষয়ের MCQ দিয়ে প্র্যাকটিস করুন
-            </p>
-          </CardHeader>
-        </Card>
-
-        {/* Controls */}
-        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
-          <CardContent className="p-4 md:p-6">
-            <div className="flex flex-col gap-4 items-start justify-between">
-              <div className="flex flex-col md:flex-row gap-3 md:gap-4 items-start md:items-center w-full">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full md:w-auto">
-                  <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                    <SelectTrigger className="w-full md:w-48 bangla-text">
-                      <SelectValue placeholder="বিভাগ নির্বাচন করুন" />
+              {/* Class Selection */}
+              {selectedDepartment && (
+                <div className="space-y-3">
+                  <label className="text-lg font-semibold text-gray-700 dark:text-gray-300 bangla-text flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5" />
+                    শ্রেণি নির্বাচন করুন
+                  </label>
+                  <Select value={selectedClass} onValueChange={(value) => {
+                    setSelectedClass(value);
+                    setSelectedSubject('');
+                  }}>
+                    <SelectTrigger className="w-full h-12 text-base bangla-text">
+                      <SelectValue placeholder="শ্রেণি নির্বাচন করুন..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all" className="bangla-text">সব বিভাগ</SelectItem>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.value} value={dept.value} className="bangla-text">
-                          {dept.label}
+                      {classLevels.map((cls) => (
+                        <SelectItem key={cls.value} value={cls.value} className="bangla-text">
+                          {cls.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              )}
 
+              {/* Subject Selection */}
+              {selectedDepartment && selectedClass && availableSubjects.length > 0 && (
+                <div className="space-y-3">
+                  <label className="text-lg font-semibold text-gray-700 dark:text-gray-300 bangla-text flex items-center gap-2">
+                    <BookOpen className="w-5 h-5" />
+                    বিষয় নির্বাচন করুন
+                  </label>
                   <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                    <SelectTrigger className="w-full md:w-48 bangla-text">
-                      <SelectValue placeholder="বিষয় নির্বাচন করুন" />
+                    <SelectTrigger className="w-full h-12 text-base bangla-text">
+                      <SelectValue placeholder="বিষয় নির্বাচন করুন..." />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all" className="bangla-text">
-                        {selectedDepartment === 'all' ? 'সব বিষয়' : 'বিভাগের সব বিষয়'}
-                      </SelectItem>
-                      {getAvailableSubjects().map((subject) => (
+                      {availableSubjects.map((subject) => (
                         <SelectItem key={subject} value={subject} className="bangla-text">
                           {subject}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              )}
 
-                  <Select value={selectedClass} onValueChange={setSelectedClass}>
-                    <SelectTrigger className="w-full md:w-48 bangla-text">
-                      <SelectValue placeholder="শ্রেণি নির্বাচন করুন" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all" className="bangla-text">সব শ্রেণি</SelectItem>
-                      {classLevels.map((classLevel) => (
-                        <SelectItem key={classLevel} value={classLevel} className="bangla-text">
-                          {classLevel} শ্রেণি
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                
-                <div className="flex gap-2">
+              {/* Start Button */}
+              {selectedDepartment && selectedClass && selectedSubject && (
+                <div className="text-center pt-4">
                   <Button
-                    onClick={startQuizMode}
-                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white bangla-text"
-                    disabled={mcqQuestions.length === 0}
+                    onClick={startNewQuestion}
+                    className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-8 py-3 text-lg font-semibold bangla-text shadow-lg"
                   >
-                    <Clock className="w-4 h-4 mr-2" />
-                    কুইজ মোড
-                  </Button>
-                  
-                  <Button
-                    onClick={resetQuiz}
-                    variant="outline"
-                    className="bangla-text"
-                  >
-                    <RotateCcw className="w-4 h-4 mr-2" />
-                    রিসেট
+                    প্র্যাকটিস শুরু করুন 🚀
                   </Button>
                 </div>
-              </div>
+              )}
 
-              {/* Stats */}
-              <div className="flex flex-wrap gap-4 text-sm">
-                <div className="flex items-center gap-2">
-                  <Trophy className="w-4 h-4 text-yellow-500" />
-                  <span className="bangla-text">স্কোর: {score}/{answeredQuestions.size}</span>
+              {selectedDepartment && selectedClass && availableSubjects.length === 0 && (
+                <div className="text-center py-8">
+                  <p className="text-gray-600 dark:text-gray-400 bangla-text text-lg">
+                    এই বিভাগ ও শ্রেণির জন্য কোনো বিষয় পাওয়া যায়নি।
+                  </p>
                 </div>
-                {quizMode && (
-                  <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-red-500" />
-                    <span className="bangla-text font-mono">{formatTime(timeLeft)}</span>
-                  </div>
-                )}
-                <div className="flex items-center gap-2">
-                  <span className="bangla-text">মোট প্রশ্ন: {mcqQuestions.length}</span>
-                </div>
-                {selectedDepartment !== 'all' && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-blue-600 dark:text-blue-400 bangla-text font-medium">
-                      {departments.find(d => d.value === selectedDepartment)?.label} বিভাগ
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {mcqQuestions.length === 0 ? (
-          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
-            <CardContent className="p-8 text-center">
-              <div className="bg-gray-100 dark:bg-gray-800 w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <CheckCircle className="w-10 h-10 text-gray-400" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-2 bangla-text">
-                কোনো MCQ পাওয়া যায়নি
-              </h3>
-              <p className="text-gray-600 dark:text-gray-300 mb-4 bangla-text">
-                {selectedDepartment === 'all' && selectedSubject === 'all' && selectedClass === 'all'
-                  ? 'এখনো কোনো MCQ আপলোড করা হয়নি।'
-                  : `${selectedDepartment !== 'all' ? departments.find(d => d.value === selectedDepartment)?.label + ' বিভাগের' : ''} ${selectedSubject !== 'all' ? selectedSubject : ''} ${selectedClass !== 'all' ? selectedClass + ' শ্রেণির' : ''} কোনো MCQ পাওয়া যায়নি।`
-                }
-              </p>
-              <div className="flex gap-2 justify-center flex-wrap">
-                {selectedDepartment !== 'all' && (
-                  <Button
-                    onClick={() => setSelectedDepartment('all')}
-                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white bangla-text"
-                  >
-                    সব বিভাগ দেখুন
-                  </Button>
-                )}
-                {selectedSubject !== 'all' && (
-                  <Button
-                    onClick={() => setSelectedSubject('all')}
-                    className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white bangla-text"
-                  >
-                    {selectedDepartment === 'all' ? 'সব বিষয় দেখুন' : 'বিভাগের সব বিষয় দেখুন'}
-                  </Button>
-                )}
-                {selectedClass !== 'all' && (
-                  <Button
-                    onClick={() => setSelectedClass('all')}
-                    variant="outline"
-                    className="bangla-text"
-                  >
-                    সব শ্রেণি দেখুন
-                  </Button>
-                )}
-              </div>
+              )}
             </CardContent>
           </Card>
-        ) : (
-          <>
-            {/* Question Card */}
-            <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
-              <CardHeader>
-                <div className="flex justify-between items-center">
-                  <CardTitle className="text-lg md:text-xl text-gray-800 dark:text-white bangla-text">
-                    প্রশ্ন {currentQuestionIndex + 1} of {mcqQuestions.length}
-                  </CardTitle>
-                  {currentQuestion?.subject && (
-                    <span className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-3 py-1 rounded-full text-sm bangla-text">
-                      {currentQuestion.subject}
-                    </span>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className="p-4 md:p-6">
-                {currentQuestion ? (
-                  <>
-                    <div className="mb-6">
-                      <h3 className="text-lg md:text-xl font-semibold text-gray-800 dark:text-white mb-4 leading-relaxed bangla-text">
-                        {currentQuestion.question}
-                      </h3>
-                      
-                      <div className="space-y-3">
-                        {['A', 'B', 'C', 'D'].map((option) => {
-                          const optionText = getOptionText(option);
-                          const isSelected = selectedAnswer === option;
-                          const isCorrect = option === currentQuestion.correct_answer;
-                          const showCorrectAnswer = showResult && isCorrect;
-                          const showWrongAnswer = showResult && isSelected && !isCorrect;
-                          
-                          return (
-                            <button
-                              key={option}
-                              onClick={() => !showResult && handleAnswerSelect(option)}
-                              disabled={showResult}
-                              className={`w-full p-3 md:p-4 text-left rounded-xl border-2 transition-all duration-200 bangla-text ${
-                                showCorrectAnswer
-                                  ? 'border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
-                                  : showWrongAnswer
-                                  ? 'border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
-                                  : isSelected
-                                  ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300'
-                                  : 'border-gray-200 dark:border-gray-600 hover:border-blue-300 dark:hover:border-blue-500 bg-white dark:bg-gray-700'
-                              }`}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <span className={`w-6 h-6 md:w-8 md:h-8 rounded-full border-2 flex items-center justify-center font-bold text-sm md:text-base ${
-                                  showCorrectAnswer
-                                    ? 'border-green-500 bg-green-100 dark:bg-green-800 text-green-700 dark:text-green-300'
-                                    : showWrongAnswer
-                                    ? 'border-red-500 bg-red-100 dark:bg-red-800 text-red-700 dark:text-red-300'
-                                    : isSelected
-                                    ? 'border-blue-500 bg-blue-100 dark:bg-blue-800 text-blue-700 dark:text-blue-300'
-                                    : 'border-gray-400 dark:border-gray-500'
-                                }`}>
-                                  {option}
-                                </span>
-                                <span className="flex-1 text-sm md:text-base">
-                                  {optionText}
-                                </span>
-                                {showCorrectAnswer && <CheckCircle className="w-5 h-5 text-green-500" />}
-                                {showWrongAnswer && <XCircle className="w-5 h-5 text-red-500" />}
-                              </div>
-                            </button>
-                          );
-                        })}
-                      </div>
-                    </div>
+        </div>
+      </div>
+    );
+  }
 
-                    {/* Action Buttons */}
-                    <div className="flex flex-col md:flex-row gap-3 justify-between">
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={handlePreviousQuestion}
-                          disabled={currentQuestionIndex === 0}
-                          variant="outline"
-                          className="bangla-text"
-                        >
-                          পূর্ববর্তী
-                        </Button>
-                        
-                        {showResult ? (
-                          <Button
-                            onClick={handleNextQuestion}
-                            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white bangla-text"
-                          >
-                            {currentQuestionIndex < mcqQuestions.length - 1 ? 'পরবর্তী প্রশ্ন' : 'কুইজ শেষ'}
-                          </Button>
-                        ) : (
-                          <Button
-                            onClick={handleSubmitAnswer}
-                            disabled={!selectedAnswer}
-                            className="bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 text-white bangla-text"
-                          >
-                            উত্তর জমা দিন
-                          </Button>
-                        )}
-                      </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4">
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Header with Score */}
+        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
+          <CardHeader className="text-center py-6">
+            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent mb-4 bangla-text">
+              📝 MCQ প্র্যাকটিস
+            </CardTitle>
+            <div className="flex justify-center items-center gap-4 flex-wrap">
+              <Badge variant="secondary" className="text-base px-4 py-2 bangla-text">
+                বিভাগ: {departments.find(d => d.value === selectedDepartment)?.label}
+              </Badge>
+              <Badge variant="secondary" className="text-base px-4 py-2 bangla-text">
+                শ্রেণি: {classLevels.find(c => c.value === selectedClass)?.label}
+              </Badge>
+              <Badge variant="secondary" className="text-base px-4 py-2 bangla-text">
+                বিষয়: {selectedSubject}
+              </Badge>
+              <Badge variant="outline" className="text-base px-4 py-2 bangla-text">
+                স্কোর: {score.correct}/{score.total}
+              </Badge>
+            </div>
+          </CardHeader>
+        </Card>
 
-                      <div className="text-sm text-gray-600 dark:text-gray-300 bangla-text">
-                        {currentQuestion.board && `${currentQuestion.board} বোর্ড`}
-                        {currentQuestion.year && ` - ${currentQuestion.year}`}
-                        {currentQuestion.chapter && ` - ${currentQuestion.chapter}`}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="text-center py-8">
-                    <p className="text-gray-600 dark:text-gray-300 bangla-text">প্রশ্ন লোড হচ্ছে...</p>
-                  </div>
+        {/* Control Buttons */}
+        <div className="flex justify-center gap-4 flex-wrap">
+          <Button
+            onClick={startNewQuestion}
+            className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white bangla-text"
+            disabled={!mcqQuestions || mcqQuestions.length === 0}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            নতুন প্রশ্ন
+          </Button>
+          <Button
+            onClick={resetGame}
+            variant="outline"
+            className="bangla-text"
+          >
+            রিসেট করুন
+          </Button>
+          <Button
+            onClick={() => {
+              setSelectedDepartment('');
+              setSelectedClass('');
+              setSelectedSubject('');
+              resetGame();
+            }}
+            variant="secondary"
+            className="bangla-text"
+          >
+            বিভাগ পরিবর্তন করুন
+          </Button>
+        </div>
+
+        {/* Question Card */}
+        {currentQuestion && (
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
+            <CardHeader>
+              <div className="flex justify-between items-start gap-4">
+                <CardTitle className="text-xl font-bold text-gray-800 dark:text-white bangla-text leading-relaxed">
+                  {currentQuestion.question}
+                </CardTitle>
+                {currentQuestion.chapter && (
+                  <Badge variant="outline" className="shrink-0 bangla-text">
+                    {currentQuestion.chapter}
+                  </Badge>
                 )}
-              </CardContent>
-            </Card>
-          </>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Options */}
+              <div className="grid gap-3">
+                {[
+                  { key: 'A', text: currentQuestion.option_a },
+                  { key: 'B', text: currentQuestion.option_b },
+                  { key: 'C', text: currentQuestion.option_c },
+                  { key: 'D', text: currentQuestion.option_d }
+                ].map((option) => (
+                  <Button
+                    key={option.key}
+                    variant={selectedAnswer === option.key ? "default" : "outline"}
+                    className={`w-full text-left justify-start p-4 h-auto min-h-[60px] bangla-text ${
+                      showResult
+                        ? option.key === currentQuestion.correct_answer
+                          ? 'bg-green-100 border-green-500 text-green-700 dark:bg-green-900/30 dark:border-green-400 dark:text-green-300'
+                          : selectedAnswer === option.key && option.key !== currentQuestion.correct_answer
+                          ? 'bg-red-100 border-red-500 text-red-700 dark:bg-red-900/30 dark:border-red-400 dark:text-red-300'
+                          : ''
+                        : ''
+                    }`}
+                    onClick={() => !showResult && setSelectedAnswer(option.key)}
+                    disabled={showResult}
+                  >
+                    <div className="flex items-center gap-3 w-full">
+                      <span className="font-bold text-lg bg-gray-100 dark:bg-gray-700 rounded-full w-8 h-8 flex items-center justify-center shrink-0">
+                        {option.key}
+                      </span>
+                      <span className="text-base leading-relaxed">{option.text}</span>
+                      {showResult && option.key === currentQuestion.correct_answer && (
+                        <CheckCircle2 className="w-5 h-5 text-green-600 ml-auto" />
+                      )}
+                      {showResult && selectedAnswer === option.key && option.key !== currentQuestion.correct_answer && (
+                        <XCircle className="w-5 h-5 text-red-600 ml-auto" />
+                      )}
+                    </div>
+                  </Button>
+                ))}
+              </div>
+
+              {/* Submit Button */}
+              {!showResult && selectedAnswer && (
+                <div className="text-center pt-4">
+                  <Button
+                    onClick={handleAnswerSubmit}
+                    className="bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white px-8 py-3 text-lg font-semibold bangla-text"
+                  >
+                    উত্তর জমা দিন
+                  </Button>
+                </div>
+              )}
+
+              {/* Result */}
+              {showResult && (
+                <div className="text-center pt-4 space-y-4">
+                  <div className={`text-xl font-bold bangla-text ${
+                    selectedAnswer === currentQuestion.correct_answer 
+                      ? 'text-green-600 dark:text-green-400' 
+                      : 'text-red-600 dark:text-red-400'
+                  }`}>
+                    {selectedAnswer === currentQuestion.correct_answer 
+                      ? '🎉 সঠিক উত্তর!' 
+                      : `❌ ভুল উত্তর! সঠিক উত্তর: ${currentQuestion.correct_answer}`
+                    }
+                  </div>
+                  <Button
+                    onClick={startNewQuestion}
+                    className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white bangla-text"
+                  >
+                    পরবর্তী প্রশ্ন
+                  </Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* No Questions Available */}
+        {!currentQuestion && mcqQuestions && mcqQuestions.length === 0 && (
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
+            <CardContent className="text-center py-12">
+              <p className="text-xl text-gray-600 dark:text-gray-400 bangla-text mb-4">
+                এই বিভাগ ও বিষয়ের জন্য কোনো প্রশ্ন পাওয়া যায়নি।
+              </p>
+              <Button
+                onClick={() => {
+                  setSelectedSubject('');
+                }}
+                variant="outline"
+                className="bangla-text"
+              >
+                অন্য বিষয় নির্বাচন করুন
+              </Button>
+            </CardContent>
+          </Card>
         )}
       </div>
     </div>
