@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -38,6 +37,16 @@ const AdminPanel = () => {
     chapter: '',
     board: '',
     year: new Date().getFullYear()
+  });
+
+  const [nctbData, setNctbData] = useState({
+    title: '',
+    subject: '',
+    class_level: 6,
+    chapter: '',
+    content: '',
+    file_url: '',
+    file_type: 'pdf'
   });
 
   const [quoteData, setQuoteData] = useState({
@@ -96,6 +105,11 @@ const AdminPanel = () => {
   const handleMcqSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     addMCQQuestion.mutate(mcqData);
+  };
+
+  const handleNCTBSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    addNCTBBook.mutate(nctbData);
   };
 
   const handleQuoteSubmit = async (event: React.FormEvent) => {
@@ -187,6 +201,7 @@ const AdminPanel = () => {
             <div className="flex flex-wrap gap-2">
               {[
                 { id: 'mcq', label: '📝 MCQ প্রশ্ন', icon: FileText },
+                { id: 'nctb', label: '📚 NCTB বই', icon: BookOpen },
                 { id: 'quotes', label: '💭 উদ্ধৃতি', icon: Quote },
                 { id: 'api', label: '🔑 API কী', icon: Key },
                 { id: 'csv', label: '📊 CSV ইমপোর্ট', icon: Upload },
@@ -214,6 +229,7 @@ const AdminPanel = () => {
                 <CardTitle className="bangla-text">📝 MCQ প্রশ্ন যোগ করুন</CardTitle>
               </CardHeader>
               <CardContent>
+                
                 <form onSubmit={handleMcqSubmit} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -357,7 +373,101 @@ const AdminPanel = () => {
             </Card>
           )}
 
+          {activeTab === 'nctb' && (
+            <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
+              <CardHeader>
+                <CardTitle className="bangla-text">📚 NCTB বই যোগ করুন</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleNCTBSubmit} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium bangla-text">বইয়ের নাম</label>
+                      <Input
+                        value={nctbData.title}
+                        onChange={(e) => setNctbData({...nctbData, title: e.target.value})}
+                        placeholder="বইয়ের নাম লিখুন"
+                        className="bangla-text"
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium bangla-text">বিষয়</label>
+                      <Input
+                        value={nctbData.subject}
+                        onChange={(e) => setNctbData({...nctbData, subject: e.target.value})}
+                        placeholder="বিষয় লিখুন"
+                        className="bangla-text"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium bangla-text">শ্রেণী</label>
+                      <Select value={nctbData.class_level.toString()} onValueChange={(value) => setNctbData({...nctbData, class_level: parseInt(value)})}>
+                        <SelectTrigger className="bangla-text">
+                          <SelectValue placeholder="শ্রেণী নির্বাচন করুন" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[6, 7, 8, 9, 10, 11, 12].map(cls => (
+                            <SelectItem key={cls} value={cls.toString()}>শ্রেণী {cls}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium bangla-text">অধ্যায়</label>
+                      <Input
+                        value={nctbData.chapter}
+                        onChange={(e) => setNctbData({...nctbData, chapter: e.target.value})}
+                        placeholder="অধ্যায় লিখুন"
+                        className="bangla-text"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium bangla-text">বিষয়বস্তু</label>
+                    <Textarea
+                      value={nctbData.content}
+                      onChange={(e) => setNctbData({...nctbData, content: e.target.value})}
+                      placeholder="বইয়ের বিষয়বস্তু বা বিবরণ লিখুন"
+                      className="bangla-text min-h-[100px]"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium bangla-text">ফাইল URL</label>
+                    <Input
+                      value={nctbData.file_url}
+                      onChange={(e) => setNctbData({...nctbData, file_url: e.target.value})}
+                      placeholder="PDF ফাইলের URL লিখুন"
+                      className="bangla-text"
+                    />
+                  </div>
+
+                  <Button type="submit" className="w-full bangla-text" disabled={addNCTBBook.isPending}>
+                    {addNCTBBook.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        যোগ করা হচ্ছে...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 mr-2" />
+                        NCTB বই যোগ করুন
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
           {activeTab === 'quotes' && (
+            
             <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
               <CardHeader>
                 <CardTitle className="bangla-text">💭 উদ্দীপনামূলক উক্তি যোগ করুন</CardTitle>
@@ -411,6 +521,7 @@ const AdminPanel = () => {
           )}
 
           {activeTab === 'api' && (
+            
             <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
               <CardHeader>
                 <CardTitle className="bangla-text">🔑 API কী ম্যানেজমেন্ট</CardTitle>
@@ -460,6 +571,7 @@ const AdminPanel = () => {
           )}
 
           {activeTab === 'csv' && (
+            
             <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
               <CardHeader>
                 <CardTitle className="bangla-text">📊 CSV ফাইল ইমপোর্ট</CardTitle>
@@ -499,6 +611,7 @@ const AdminPanel = () => {
           )}
 
           {activeTab === 'chatbot' && (
+            
             <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
               <CardHeader>
                 <CardTitle className="bangla-text">🤖 চ্যাটবট কন্ট্রোল</CardTitle>
