@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, ChatBubble, Search, BrainCircuit, GraduationCap, Quote } from 'lucide-react';
+import { CalendarDays, MessageCircle, Search, BrainCircuit, GraduationCap, Quote } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -96,7 +97,7 @@ const HomePage = () => {
 
           <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/chat')}>
             <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
-              <ChatBubble className="w-10 h-10 text-green-500" />
+              <MessageCircle className="w-10 h-10 text-green-500" />
               <h3 className="text-xl font-semibold bangla-text text-center">AI চ্যাট</h3>
               <p className="text-gray-600 dark:text-gray-300 bangla-text text-center">AI এর সাথে আপনার যেকোনো প্রশ্নের উত্তর খুঁজুন</p>
             </CardContent>
