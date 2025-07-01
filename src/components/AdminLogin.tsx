@@ -4,7 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
 import { Loader2, Lock } from 'lucide-react';
 
 interface AdminLoginProps {
@@ -22,24 +21,8 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase
-        .from('admin_settings')
-        .select('*')
-        .eq('username', username)
-        .eq('is_active', true)
-        .single();
-
-      if (error || !data) {
-        toast({
-          title: "লগিন ব্যর্থ",
-          description: "ভুল ইউজারনেম বা পাসওয়ার্ড",
-          variant: "destructive"
-        });
-        return;
-      }
-
-      // Simple password check (in real app, use proper hashing)
-      if (password === 'Ashraf') {
+      // Simple authentication check - username: admin, password: Ashraf
+      if (username === 'admin' && password === 'Ashraf') {
         localStorage.setItem('admin_logged_in', 'true');
         localStorage.setItem('admin_login_time', Date.now().toString());
         onLogin();
@@ -50,7 +33,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
       } else {
         toast({
           title: "লগিন ব্যর্থ",
-          description: "ভুল পাসওয়ার্ড",
+          description: "ভুল ইউজারনেম বা পাসওয়ার্ড",
           variant: "destructive"
         });
       }
@@ -85,7 +68,7 @@ const AdminLogin: React.FC<AdminLoginProps> = ({ onLogin }) => {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="ইউজারনেম লিখুন"
+                placeholder="admin"
                 className="bangla-text"
                 required
               />

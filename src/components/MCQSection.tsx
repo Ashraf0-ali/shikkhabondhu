@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -5,7 +6,6 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import type { Tables } from '@/integrations/supabase/types';
-import { Quote } from 'lucide-react';
 
 type MCQQuestion = Tables<'mcq_questions'>;
 
@@ -14,9 +14,6 @@ const MCQSection = () => {
   const [selectedBoard, setSelectedBoard] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
   const { toast } = useToast();
-
-  const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [selectedClass, setSelectedClass] = useState('');
 
   const { data: questions, isLoading, error } = useQuery({
     queryKey: ['mcq_questions'],
@@ -34,40 +31,12 @@ const MCQSection = () => {
   const boards = [...new Set(questions?.map(q => q.board))].filter(Boolean) as string[];
   const years = [...new Set(questions?.map(q => q.year?.toString()))].filter(Boolean) as string[];
 
-  const departments = [
-    { value: 'science', label: 'বিজ্ঞান' },
-    { value: 'humanities', label: 'মানবিক' },
-    { value: 'business', label: 'ব্যবসায়' },
-    { value: 'islamic', label: 'ইসলামিক' },
-    { value: 'technical', label: 'কারিগরি' }
-  ];
-
-  const classes = [
-    { value: 'class-6', label: '৬ম শ্রেণী' },
-    { value: 'class-7', label: '৭ম শ্রেণী' },
-    { value: 'class-8', label: '৮ম শ্রেণী' },
-    { value: 'class-9', label: '৯ম শ্রেণী' },
-    { value: 'class-10', label: '১০ম শ্রেণী' },
-    { value: 'ssc', label: 'এসএসসি' },
-    { value: 'hsc', label: 'এইচএসসি' },
-    { value: 'alim', label: 'আলিম' },
-    { value: 'dakhil', label: 'দাখিল' },
-    { value: 'honors', label: 'অনার্স' },
-    { value: 'masters', label: 'মাস্টার্স' }
-  ];
-
   const filteredQuestions = questions?.filter(q => {
     const matchesSubject = !selectedSubject || q.subject === selectedSubject;
     const matchesBoard = !selectedBoard || q.board === selectedBoard;
     const matchesYear = !selectedYear || q.year === parseInt(selectedYear);
-    const matchesDepartment = !selectedDepartment || q.subject.toLowerCase().includes(selectedDepartment);
-    const matchesClass = !selectedClass || (
-      (selectedClass === 'alim' && q.board === 'আলিম') ||
-      (selectedClass === 'dakhil' && q.board === 'দাখিল') ||
-      (selectedClass.includes('class') && q.board?.includes('শ্রেণী'))
-    );
     
-    return matchesSubject && matchesBoard && matchesYear && matchesDepartment && matchesClass;
+    return matchesSubject && matchesBoard && matchesYear;
   }) || [];
 
   return (
@@ -91,37 +60,7 @@ const MCQSection = () => {
             <CardTitle className="bangla-text">🔍 ফিল্টার করুন</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium bangla-text">শাখা/বিভাগ</label>
-                <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
-                  <SelectTrigger className="bangla-text">
-                    <SelectValue placeholder="বিভাগ নির্বাচন করুন" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">সব বিভাগ</SelectItem>
-                    {departments.map(dept => (
-                      <SelectItem key={dept.value} value={dept.value}>{dept.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium bangla-text">শ্রেণী</label>
-                <Select value={selectedClass} onValueChange={setSelectedClass}>
-                  <SelectTrigger className="bangla-text">
-                    <SelectValue placeholder="শ্রেণী নির্বাচন করুন" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">সব শ্রেণী</SelectItem>
-                    {classes.map(cls => (
-                      <SelectItem key={cls.value} value={cls.value}>{cls.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium bangla-text">বিষয়</label>
                 <Select value={selectedSubject} onValueChange={setSelectedSubject}>
@@ -129,9 +68,39 @@ const MCQSection = () => {
                     <SelectValue placeholder="বিষয় নির্বাচন করুন" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">সব বিষয়</SelectItem>
+                    <SelectItem value="all">সব বিষয়</SelectItem>
                     {subjects.map(subject => (
                       <SelectItem key={subject} value={subject}>{subject}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium bangla-text">বোর্ড</label>
+                <Select value={selectedBoard} onValueChange={setSelectedBoard}>
+                  <SelectTrigger className="bangla-text">
+                    <SelectValue placeholder="বোর্ড নির্বাচন করুন" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">সব বোর্ড</SelectItem>
+                    {boards.map(board => (
+                      <SelectItem key={board} value={board}>{board}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium bangla-text">বছর</label>
+                <Select value={selectedYear} onValueChange={setSelectedYear}>
+                  <SelectTrigger className="bangla-text">
+                    <SelectValue placeholder="বছর নির্বাচন করুন" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">সব বছর</SelectItem>
+                    {years.map(year => (
+                      <SelectItem key={year} value={year}>{year}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -162,18 +131,10 @@ const MCQSection = () => {
                   <div key={question.id} className="p-4 border rounded-lg">
                     <p className="font-medium bangla-text">{question.question}</p>
                     <ul className="list-none space-y-2 mt-2">
-                      <li>
-                        A. {question.option_a}
-                      </li>
-                      <li>
-                        B. {question.option_b}
-                      </li>
-                      <li>
-                        C. {question.option_c}
-                      </li>
-                      <li>
-                        D. {question.option_d}
-                      </li>
+                      <li>A. {question.option_a}</li>
+                      <li>B. {question.option_b}</li>
+                      <li>C. {question.option_c}</li>
+                      <li>D. {question.option_d}</li>
                     </ul>
                     <p className="mt-2 font-bold bangla-text">
                       সঠিক উত্তর: {question.correct_answer}
