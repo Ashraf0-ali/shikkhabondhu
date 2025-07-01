@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Send, Bot, User, Loader2 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
 
 interface Message {
   id: string;
@@ -21,6 +21,20 @@ const ChatInterface = () => {
   const [isLoading, setIsLoading] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  // Check if chatbot is enabled
+  const { data: chatbotSettings } = useQuery({
+    queryKey: ['chatbot_settings'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('chatbot_settings')
+        .select('*')
+        .single();
+      
+      if (error) throw error;
+      return data;
+    }
+  });
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -41,6 +55,16 @@ const ChatInterface = () => {
 
   const sendMessage = async () => {
     if (!inputMessage.trim() || isLoading) return;
+
+    // Check if chatbot is enabled
+    if (!chatbotSettings?.is_enabled) {
+      toast({
+        title: "চ্যাটবট বন্ধ",
+        description: "চ্যাটবট সেবা বর্তমানে বন্ধ রয়েছে",
+        variant: "destructive"
+      });
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -100,6 +124,24 @@ const ChatInterface = () => {
       sendMessage();
     }
   };
+
+  if (!chatbotSettings?.is_enabled) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl max-w-md w-full">
+          <CardContent className="p-8 text-center">
+            <Bot className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+            <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-2 bangla-text">
+              চ্যাটবট সেবা বন্ধ
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 bangla-text">
+              চ্যাটবট সেবা বর্তমানে রক্ষণাবেক্ষণের জন্য বন্ধ রয়েছে। অসুবিধার জন্য দুঃখিত।
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4 pb-24">

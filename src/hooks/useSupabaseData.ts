@@ -1,4 +1,3 @@
-
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -207,6 +206,32 @@ export const useSupabaseData = () => {
     }
   });
 
+  // Add tips/feedback mutation
+  const addTipsFeedback = useMutation({
+    mutationFn: async (data: TablesInsert<'tips_feedback'>) => {
+      const { error } = await supabase
+        .from('tips_feedback')
+        .insert([data]);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tips_feedback'] });
+      
+      toast({
+        title: "টিপস/ফিডব্যাক যুক্ত হয়েছে ✅",
+        description: "নতুন টিপস/ফিডব্যাক সফলভাবে যুক্ত হয়েছে",
+      });
+    },
+    onError: (error) => {
+      console.error('Tips/Feedback add error:', error);
+      toast({
+        title: "Error ❌",
+        description: "টিপস/ফিডব্যাক যুক্ত করতে সমস্যা হয়েছে",
+        variant: "destructive"
+      });
+    }
+  });
+
   const handleMCQAdd = () => {
     // This function will be called from the component
   };
@@ -230,6 +255,7 @@ export const useSupabaseData = () => {
     addNote,
     addMotivationalQuote,
     addApiKey,
+    addTipsFeedback,
     importMCQsFromCSV,
     handleMCQAdd,
     handleFileUpload,

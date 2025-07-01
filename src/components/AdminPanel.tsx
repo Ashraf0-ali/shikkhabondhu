@@ -1,53 +1,32 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useMutation } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Plus, FileText, BookOpen, Book, Quote, Key, Upload } from 'lucide-react';
-
-interface MCQData {
-  question: string;
-  option_a: string;
-  option_b: string;
-  option_c: string;
-  option_d: string;
-  correct_answer: 'A' | 'B' | 'C' | 'D';
-  subject: string;
-  chapter: string;
-  board: string;
-  year: number;
-}
-
-interface BoardData {
-  title: string;
-  subject: string;
-  board: string;
-  year: number;
-  file_url: string;
-  file_type: string;
-}
-
-interface NCTBData {
-  title: string;
-  subject: string;
-  class_level: number;
-  file_url: string;
-  file_type: string;
-}
-
-interface NotesData {
-  title: string;
-  subject: string;
-  file_url: string;
-  file_type: string;
-}
+import { Loader2, Plus, FileText, BookOpen, Book, Quote, Key, Upload, LogOut, Settings } from 'lucide-react';
+import { useSupabaseData } from '@/hooks/useSupabaseData';
+import AdminLogin from './AdminLogin';
 
 const AdminPanel = () => {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState('mcq');
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+  const { 
+    addMCQQuestion, 
+    addBoardQuestion, 
+    addNCTBBook, 
+    addNote, 
+    addMotivationalQuote, 
+    addApiKey,
+    importMCQsFromCSV 
+  } = useSupabaseData();
+
+  // Form states
   const [mcqData, setMcqData] = useState({
     question: '',
     option_a: '',
@@ -60,311 +39,126 @@ const AdminPanel = () => {
     board: '',
     year: new Date().getFullYear()
   });
-  const [boardData, setBoardData] = useState({
-    title: '',
-    subject: '',
-    board: '',
-    year: new Date().getFullYear(),
-    file_url: '',
-    file_type: ''
+
+  const [quoteData, setQuoteData] = useState({
+    quote: '',
+    author: '',
+    tags: ''
   });
-  const [nctbData, setNctbData] = useState({
-    title: '',
-    subject: '',
-    class_level: '6',
-    file_url: '',
-    file_type: ''
+
+  const [apiKeyData, setApiKeyData] = useState({
+    provider: '',
+    api_key: ''
   });
-  const [notesData, setNotesData] = useState({
-    title: '',
-    subject: '',
-    file_url: '',
-    file_type: ''
+
+  const [chatbotSettings, setChatbotSettings] = useState({
+    is_enabled: true,
+    max_daily_requests: 100,
+    system_prompt: 'আপনি একজন বাংলাদেশি শিক্ষা সহায়ক AI।'
   });
-  const { toast } = useToast();
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
-  const [isUploading, setIsUploading] = useState<{[key: string]: boolean}>({});
 
-  const addMcqQuestion = useMutation({
-    mutationFn: async (data: MCQData) => {
-      const { data: response, error } = await supabase
-        .from('mcq_questions')
-        .insert([data]);
-      if (error) throw error;
-      return response;
-    },
-    onSuccess: () => {
-      toast({
-        title: "সফল",
-        description: "MCQ প্রশ্ন যোগ করা হয়েছে!",
-      });
-      setMcqData({
-        question: '',
-        option_a: '',
-        option_b: '',
-        option_c: '',
-        option_d: '',
-        correct_answer: 'A',
-        subject: '',
-        chapter: '',
-        board: '',
-        year: new Date().getFullYear()
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "ত্রুটি",
-        description: "MCQ প্রশ্ন যোগ করতে সমস্যা হয়েছে।",
-        variant: "destructive"
-      });
-      console.error("Error adding MCQ question:", error);
-    },
-  });
+  useEffect(() => {
+    const adminLoggedIn = localStorage.getItem('admin_logged_in');
+    const loginTime = localStorage.getItem('admin_login_time');
+    
+    if (adminLoggedIn === 'true' && loginTime) {
+      const currentTime = Date.now();
+      const loginTimestamp = parseInt(loginTime);
+      const timeDifference = currentTime - loginTimestamp;
+      const hoursElapsed = timeDifference / (1000 * 60 * 60);
+      
+      if (hoursElapsed < 24) {
+        setIsLoggedIn(true);
+      } else {
+        localStorage.removeItem('admin_logged_in');
+        localStorage.removeItem('admin_login_time');
+      }
+    }
+    setIsLoading(false);
+  }, []);
 
-  const addBoardQuestion = useMutation({
-    mutationFn: async (data: BoardData) => {
-      const { data: response, error } = await supabase
-        .from('board_questions')
-        .insert([data]);
-      if (error) throw error;
-      return response;
-    },
-    onSuccess: () => {
-      toast({
-        title: "সফল",
-        description: "বোর্ড প্রশ্ন যোগ করা হয়েছে!",
-      });
-      setBoardData({
-        title: '',
-        subject: '',
-        board: '',
-        year: new Date().getFullYear(),
-        file_url: '',
-        file_type: ''
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "ত্রুটি",
-        description: "বোর্ড প্রশ্ন যোগ করতে সমস্যা হয়েছে।",
-        variant: "destructive"
-      });
-      console.error("Error adding board question:", error);
-    },
-  });
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+  };
 
-  const addNctbBook = useMutation({
-    mutationFn: async (data: NCTBData) => {
-      const { data: response, error } = await supabase
-        .from('nctb_books')
-        .insert([data]);
-      if (error) throw error;
-      return response;
-    },
-    onSuccess: () => {
-      toast({
-        title: "সফল",
-        description: "NCTB বই যোগ করা হয়েছে!",
-      });
-      setNctbData({
-        title: '',
-        subject: '',
-        class_level: '6',
-        file_url: '',
-        file_type: ''
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "ত্রুটি",
-        description: "NCTB বই যোগ করতে সমস্যা হয়েছে।",
-        variant: "destructive"
-      });
-      console.error("Error adding NCTB book:", error);
-    },
-  });
+  const handleLogout = () => {
+    localStorage.removeItem('admin_logged_in');
+    localStorage.removeItem('admin_login_time');
+    setIsLoggedIn(false);
+    toast({
+      title: "লগআউট সফল",
+      description: "আপনি সফলভাবে লগআউট হয়েছেন",
+    });
+  };
 
-  const addNote = useMutation({
-    mutationFn: async (data: NotesData) => {
-      const { data: response, error } = await supabase
-        .from('notes')
-        .insert([data]);
-      if (error) throw error;
-      return response;
-    },
-    onSuccess: () => {
-      toast({
-        title: "সফল",
-        description: "নোট যোগ করা হয়েছে!",
-      });
-      setNotesData({
-        title: '',
-        subject: '',
-        file_url: '',
-        file_type: ''
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "ত্রুটি",
-        description: "নোট যোগ করতে সমস্যা হয়েছে।",
-        variant: "destructive"
-      });
-      console.error("Error adding note:", error);
-    },
-  });
+  const handleMcqSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    addMCQQuestion.mutate(mcqData);
+  };
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, section: string) => {
+  const handleQuoteSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    addMotivationalQuote.mutate(quoteData);
+  };
+
+  const handleApiKeySubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    addApiKey.mutate(apiKeyData);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
       setSelectedFile(file);
-      console.log(`File selected for ${section}:`, file.name);
     }
   };
 
-  const handleFileUpload = async (section: string) => {
+  const handleCSVImport = async () => {
     if (!selectedFile) {
       toast({
-        title: "ত্রুটি",
-        description: "অনুগ্রহ করে একটি ফাইল নির্বাচন করুন।",
+        title: "ফাইল নির্বাচন করুন",
+        description: "প্রথমে একটি CSV ফাইল নির্বাচন করুন",
         variant: "destructive"
       });
       return;
     }
 
-    setIsUploading(prev => ({ ...prev, [section]: true }));
-    setUploadProgress(prev => ({ ...prev, [section]: 0 }));
+    const text = await selectedFile.text();
+    const lines = text.split('\n').filter(line => line.trim());
+    const headers = lines[0].split(',');
+    
+    const mcqs = lines.slice(1).map(line => {
+      const values = line.split(',');
+      return {
+        question: values[0] || '',
+        option_a: values[1] || '',
+        option_b: values[2] || '',
+        option_c: values[3] || '',
+        option_d: values[4] || '',
+        correct_answer: (values[5] || 'A') as 'A' | 'B' | 'C' | 'D',
+        subject: values[6] || '',
+        chapter: values[7] || '',
+        board: values[8] || '',
+        year: parseInt(values[9]) || new Date().getFullYear()
+      };
+    });
 
-    try {
-      // Create a unique file name
-      const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
-      const filePath = `${section}/${fileName}`;
-
-      // Upload to Supabase storage (if storage is set up)
-      // For now, we'll just simulate the upload and store file info
-      
-      // Simulate upload progress
-      for (let i = 0; i <= 100; i += 10) {
-        setUploadProgress(prev => ({ ...prev, [section]: i }));
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-
-      const fileUrl = `uploads/${filePath}`;
-      const fileType = selectedFile.type;
-
-      // Add to appropriate table based on section
-      if (section === 'board') {
-        await addBoardQuestion.mutateAsync({
-          ...boardData,
-          file_url: fileUrl,
-          file_type: fileType,
-          title: boardData.title || selectedFile.name.split('.')[0],
-          subject: boardData.subject || 'সাধারণ',
-          board: boardData.board || 'সাধারণ'
-        });
-      } else if (section === 'nctb') {
-        await addNctbBook.mutateAsync({
-          ...nctbData,
-          file_url: fileUrl,
-          file_type: fileType,
-          title: nctbData.title || selectedFile.name.split('.')[0],
-          subject: nctbData.subject || 'সাধারণ',
-          class_level: parseInt(nctbData.class_level)
-        });
-      } else if (section === 'notes') {
-        await addNote.mutateAsync({
-          ...notesData,
-          file_url: fileUrl,
-          file_type: fileType,
-          title: notesData.title || selectedFile.name.split('.')[0],
-          subject: notesData.subject || 'সাধারণ'
-        });
-      }
-
-      toast({
-        title: "সফল",
-        description: "ফাইল সফলভাবে আপলোড হয়েছে!",
-      });
-
-      // Reset file selection
-      setSelectedFile(null);
-      const fileInput = document.querySelector(`input[type="file"][data-section="${section}"]`) as HTMLInputElement;
-      if (fileInput) fileInput.value = '';
-
-    } catch (error) {
-      console.error('Upload error:', error);
-      toast({
-        title: "ত্রুটি",
-        description: "ফাইল আপলোড করতে সমস্যা হয়েছে।",
-        variant: "destructive"
-      });
-    } finally {
-      setIsUploading(prev => ({ ...prev, [section]: false }));
-      setUploadProgress(prev => ({ ...prev, [section]: 0 }));
-    }
+    importMCQsFromCSV.mutate(mcqs);
   };
 
-  const handleMcqSubmit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    addMcqQuestion.mutate(mcqData);
-  };
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
 
-  const renderFileUpload = (section: string, title: string) => (
-    <Card>
-      <CardHeader>
-        <CardTitle className="bangla-text">{title}</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium bangla-text">ফাইল নির্বাচন করুন</label>
-          <Input
-            type="file"
-            onChange={(e) => handleFileSelect(e, section)}
-            accept=".pdf,.doc,.docx,.txt"
-            className="bangla-text"
-            data-section={section}
-          />
-        </div>
-        
-        {selectedFile && (
-          <div className="space-y-2">
-            <p className="text-sm text-gray-600 bangla-text">
-              নির্বাচিত ফাইল: {selectedFile.name}
-            </p>
-            <Button
-              onClick={() => handleFileUpload(section)}
-              disabled={isUploading[section]}
-              className="w-full bangla-text"
-            >
-              {isUploading[section] ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  আপলোড হচ্ছে... {uploadProgress[section]}%
-                </>
-              ) : (
-                <>
-                  <Upload className="w-4 h-4 mr-2" />
-                  আপলোড করুন
-                </>
-              )}
-            </Button>
-            
-            {uploadProgress[section] > 0 && uploadProgress[section] < 100 && (
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
-                  className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${uploadProgress[section]}%` }}
-                ></div>
-              </div>
-            )}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+  if (!isLoggedIn) {
+    return <AdminLogin onLogin={handleLogin} />;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4">
@@ -372,9 +166,15 @@ const AdminPanel = () => {
         {/* Header */}
         <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
           <CardHeader className="text-center py-6">
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent mb-2 bangla-text">
-              🛠️ এডমিন প্যানেল
-            </CardTitle>
+            <div className="flex justify-between items-center">
+              <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent bangla-text">
+                🛠️ এডমিন প্যানেল
+              </CardTitle>
+              <Button onClick={handleLogout} variant="outline" className="bangla-text">
+                <LogOut className="w-4 h-4 mr-2" />
+                লগআউট
+              </Button>
+            </div>
             <p className="text-gray-600 dark:text-gray-300 bangla-text">
               শিক্ষা উপকরণ ম্যানেজমেন্ট সিস্টেম
             </p>
@@ -387,11 +187,10 @@ const AdminPanel = () => {
             <div className="flex flex-wrap gap-2">
               {[
                 { id: 'mcq', label: '📝 MCQ প্রশ্ন', icon: FileText },
-                { id: 'board', label: '📋 বোর্ড প্রশ্ন', icon: BookOpen },
-                { id: 'nctb', label: '📚 NCTB বই', icon: Book },
-                { id: 'notes', label: '📓 নোটস', icon: FileText },
                 { id: 'quotes', label: '💭 উদ্ধৃতি', icon: Quote },
-                { id: 'api', label: '🔑 API কী', icon: Key }
+                { id: 'api', label: '🔑 API কী', icon: Key },
+                { id: 'csv', label: '📊 CSV ইমপোর্ট', icon: Upload },
+                { id: 'chatbot', label: '🤖 চ্যাটবট কন্ট্রোল', icon: Settings }
               ].map(tab => (
                 <Button
                   key={tab.id}
@@ -440,24 +239,23 @@ const AdminPanel = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium bangla-text">বোর্ড</label>
+                      <label className="text-sm font-medium bangla-text">বোর্ড/শ্রেণী</label>
                       <Select value={mcqData.board} onValueChange={(value) => setMcqData({...mcqData, board: value})}>
                         <SelectTrigger className="bangla-text">
-                          <SelectValue placeholder="বোর্ড নির্বাচন করুন" />
+                          <SelectValue placeholder="বোর্ড/শ্রেণী নির্বাচন করুন" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="ঢাকা">ঢাকা</SelectItem>
-                          <SelectItem value="চট্টগ্রাম">চট্টগ্রাম</SelectItem>
-                          <SelectItem value="রাজশাহী">রাজশাহী</SelectItem>
-                          <SelectItem value="যশোর">যশোর</SelectItem>
-                          <SelectItem value="কুমিল্লা">কুমিল্লা</SelectItem>
-                          <SelectItem value="বরিশাল">বরিশাল</SelectItem>
-                          <SelectItem value="সিলেট">সিলেট</SelectItem>
-                          <SelectItem value="দিনাজপুর">দিনাজপুর</SelectItem>
-                          <SelectItem value="মাদ্রাসা">মাদ্রাসা</SelectItem>
-                          <SelectItem value="কারিগরি">কারিগরি</SelectItem>
+                          <SelectItem value="ঢাকা">ঢাকা বোর্ড</SelectItem>
+                          <SelectItem value="চট্টগ্রাম">চট্টগ্রাম বোর্ড</SelectItem>
+                          <SelectItem value="রাজশাহী">রাজশাহী বোর্ড</SelectItem>
+                          <SelectItem value="যশোর">যশোর বোর্ড</SelectItem>
+                          <SelectItem value="কুমিল্লা">কুমিল্লা বোর্ড</SelectItem>
+                          <SelectItem value="বরিশাল">বরিশাল বোর্ড</SelectItem>
+                          <SelectItem value="সিলেট">সিলেট বোর্ড</SelectItem>
+                          <SelectItem value="দিনাজপুর">দিনাজপুর বোর্ড</SelectItem>
                           <SelectItem value="আলিম">আলিম</SelectItem>
                           <SelectItem value="দাখিল">দাখিল</SelectItem>
+                          <SelectItem value="কারিগরি">কারিগরি</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -541,8 +339,8 @@ const AdminPanel = () => {
                     </Select>
                   </div>
 
-                  <Button type="submit" className="w-full bangla-text" disabled={addMcqQuestion.isPending}>
-                    {addMcqQuestion.isPending ? (
+                  <Button type="submit" className="w-full bangla-text" disabled={addMCQQuestion.isPending}>
+                    {addMCQQuestion.isPending ? (
                       <>
                         <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                         যোগ করা হচ্ছে...
@@ -559,11 +357,202 @@ const AdminPanel = () => {
             </Card>
           )}
 
-          {activeTab === 'board' && renderFileUpload('board', '📋 বোর্ড প্রশ্ন আপলোড')}
-          {activeTab === 'nctb' && renderFileUpload('nctb', '📚 NCTB বই আপলোড')}
-          {activeTab === 'notes' && renderFileUpload('notes', '📓 নোটস আপলোড')}
+          {activeTab === 'quotes' && (
+            <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
+              <CardHeader>
+                <CardTitle className="bangla-text">💭 উদ্দীপনামূলক উক্তি যোগ করুন</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleQuoteSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium bangla-text">উক্তি</label>
+                    <Textarea
+                      value={quoteData.quote}
+                      onChange={(e) => setQuoteData({...quoteData, quote: e.target.value})}
+                      placeholder="উক্তি লিখুন"
+                      className="bangla-text min-h-[100px]"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium bangla-text">লেখক</label>
+                    <Input
+                      value={quoteData.author}
+                      onChange={(e) => setQuoteData({...quoteData, author: e.target.value})}
+                      placeholder="লেখকের নাম"
+                      className="bangla-text"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium bangla-text">ট্যাগ</label>
+                    <Input
+                      value={quoteData.tags}
+                      onChange={(e) => setQuoteData({...quoteData, tags: e.target.value})}
+                      placeholder="ট্যাগ (কমা দিয়ে আলাদা করুন)"
+                      className="bangla-text"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full bangla-text" disabled={addMotivationalQuote.isPending}>
+                    {addMotivationalQuote.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        যোগ করা হচ্ছে...
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4 mr-2" />
+                        উক্তি যোগ করুন
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
 
+          {activeTab === 'api' && (
+            <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
+              <CardHeader>
+                <CardTitle className="bangla-text">🔑 API কী ম্যানেজমেন্ট</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleApiKeySubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium bangla-text">প্রোভাইডার</label>
+                    <Select value={apiKeyData.provider} onValueChange={(value) => setApiKeyData({...apiKeyData, provider: value})}>
+                      <SelectTrigger className="bangla-text">
+                        <SelectValue placeholder="প্রোভাইডার নির্বাচন করুন" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="gemini">Google Gemini</SelectItem>
+                        <SelectItem value="openai">OpenAI</SelectItem>
+                        <SelectItem value="anthropic">Anthropic Claude</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium bangla-text">API কী</label>
+                    <Input
+                      type="password"
+                      value={apiKeyData.api_key}
+                      onChange={(e) => setApiKeyData({...apiKeyData, api_key: e.target.value})}
+                      placeholder="API কী লিখুন"
+                      className="bangla-text"
+                      required
+                    />
+                  </div>
+                  <Button type="submit" className="w-full bangla-text" disabled={addApiKey.isPending}>
+                    {addApiKey.isPending ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        সংরক্ষণ করা হচ্ছে...
+                      </>
+                    ) : (
+                      <>
+                        <Key className="w-4 h-4 mr-2" />
+                        API কী সংরক্ষণ করুন
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === 'csv' && (
+            <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
+              <CardHeader>
+                <CardTitle className="bangla-text">📊 CSV ফাইল ইমপোর্ট</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium bangla-text">CSV ফাইল নির্বাচন করুন</label>
+                  <Input
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileUpload}
+                    className="bangla-text"
+                  />
+                </div>
+                <div className="text-sm text-gray-600 bangla-text">
+                  <p>CSV ফরম্যাট: question,option_a,option_b,option_c,option_d,correct_answer,subject,chapter,board,year</p>
+                </div>
+                <Button 
+                  onClick={handleCSVImport} 
+                  className="w-full bangla-text" 
+                  disabled={importMCQsFromCSV.isPending || !selectedFile}
+                >
+                  {importMCQsFromCSV.isPending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ইমপোর্ট করা হচ্ছে...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4 mr-2" />
+                      CSV ইমপোর্ট করুন
+                    </>
+                  )}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          {activeTab === 'chatbot' && (
+            <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
+              <CardHeader>
+                <CardTitle className="bangla-text">🤖 চ্যাটবট কন্ট্রোল</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="space-y-1">
+                    <h3 className="text-sm font-medium bangla-text">চ্যাটবট চালু/বন্ধ</h3>
+                    <p className="text-xs text-gray-500 bangla-text">চ্যাটবট সেবা নিয়ন্ত্রণ করুন</p>
+                  </div>
+                  <Switch
+                    checked={chatbotSettings.is_enabled}
+                    onCheckedChange={(checked) => setChatbotSettings({...chatbotSettings, is_enabled: checked})}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium bangla-text">দৈনিক সর্বোচ্চ অনুরোধ</label>
+                  <Input
+                    type="number"
+                    value={chatbotSettings.max_daily_requests}
+                    onChange={(e) => setChatbotSettings({...chatbotSettings, max_daily_requests: parseInt(e.target.value)})}
+                    placeholder="দৈনিক সর্বোচ্চ অনুরোধ"
+                    className="bangla-text"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium bangla-text">সিস্টেম প্রম্পট</label>
+                  <Textarea
+                    value={chatbotSettings.system_prompt}
+                    onChange={(e) => setChatbotSettings({...chatbotSettings, system_prompt: e.target.value})}
+                    placeholder="সিস্টেম প্রম্পট"
+                    className="bangla-text min-h-[100px]"
+                  />
+                </div>
+                <Button className="w-full bangla-text">
+                  <Settings className="w-4 h-4 mr-2" />
+                  সেটিংস সংরক্ষণ করুন
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
+
+        {/* Footer */}
+        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
+          <CardContent className="p-4 text-center">
+            <p className="text-sm text-gray-600 bangla-text">
+              Developed by Ashraf | যেকোনো প্রয়োজনে মেসেজ করুন - 
+              <a href="https://wa.me/8801825210571" className="text-blue-600 hover:underline ml-1">
+                WhatsApp: 01825210571
+              </a>
+            </p>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

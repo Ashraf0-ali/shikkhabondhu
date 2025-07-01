@@ -9,6 +9,33 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admin_settings: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          password_hash: string
+          updated_at: string | null
+          username: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          password_hash: string
+          updated_at?: string | null
+          username?: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          password_hash?: string
+          updated_at?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           api_key: string
@@ -40,6 +67,7 @@ export type Database = {
           file_type: string | null
           file_url: string | null
           id: string
+          metadata: Json | null
           seo_description: string | null
           seo_tags: string | null
           seo_title: string | null
@@ -53,6 +81,7 @@ export type Database = {
           file_type?: string | null
           file_url?: string | null
           id?: string
+          metadata?: Json | null
           seo_description?: string | null
           seo_tags?: string | null
           seo_title?: string | null
@@ -66,12 +95,43 @@ export type Database = {
           file_type?: string | null
           file_url?: string | null
           id?: string
+          metadata?: Json | null
           seo_description?: string | null
           seo_tags?: string | null
           seo_title?: string | null
           subject?: string
           title?: string
           year?: number
+        }
+        Relationships: []
+      }
+      chatbot_settings: {
+        Row: {
+          allowed_models: string[] | null
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          max_daily_requests: number | null
+          system_prompt: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          allowed_models?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          max_daily_requests?: number | null
+          system_prompt?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          allowed_models?: string[] | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          max_daily_requests?: number | null
+          system_prompt?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -88,6 +148,7 @@ export type Database = {
           correct_answer: string
           created_at: string
           id: string
+          metadata: Json | null
           option_a: string | null
           option_b: string | null
           option_c: string | null
@@ -104,6 +165,7 @@ export type Database = {
           correct_answer: string
           created_at?: string
           id?: string
+          metadata?: Json | null
           option_a?: string | null
           option_b?: string | null
           option_c?: string | null
@@ -120,6 +182,7 @@ export type Database = {
           correct_answer?: string
           created_at?: string
           id?: string
+          metadata?: Json | null
           option_a?: string | null
           option_b?: string | null
           option_c?: string | null
@@ -168,6 +231,7 @@ export type Database = {
           file_type: string | null
           file_url: string | null
           id: string
+          metadata: Json | null
           seo_description: string | null
           seo_tags: string | null
           seo_title: string | null
@@ -183,6 +247,7 @@ export type Database = {
           file_type?: string | null
           file_url?: string | null
           id?: string
+          metadata?: Json | null
           seo_description?: string | null
           seo_tags?: string | null
           seo_title?: string | null
@@ -198,6 +263,7 @@ export type Database = {
           file_type?: string | null
           file_url?: string | null
           id?: string
+          metadata?: Json | null
           seo_description?: string | null
           seo_tags?: string | null
           seo_title?: string | null
@@ -215,6 +281,7 @@ export type Database = {
           file_type: string | null
           file_url: string | null
           id: string
+          metadata: Json | null
           seo_description: string | null
           seo_tags: string | null
           seo_title: string | null
@@ -229,6 +296,7 @@ export type Database = {
           file_type?: string | null
           file_url?: string | null
           id?: string
+          metadata?: Json | null
           seo_description?: string | null
           seo_tags?: string | null
           seo_title?: string | null
@@ -243,6 +311,7 @@ export type Database = {
           file_type?: string | null
           file_url?: string | null
           id?: string
+          metadata?: Json | null
           seo_description?: string | null
           seo_tags?: string | null
           seo_title?: string | null
