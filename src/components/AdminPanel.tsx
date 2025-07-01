@@ -34,7 +34,7 @@ interface BoardData {
 interface NCTBData {
   title: string;
   subject: string;
-  class_level: string;
+  class_level: number;
   file_url: string;
   file_type: string;
 }
@@ -71,7 +71,7 @@ const AdminPanel = () => {
   const [nctbData, setNctbData] = useState({
     title: '',
     subject: '',
-    class_level: '',
+    class_level: '6',
     file_url: '',
     file_type: ''
   });
@@ -87,142 +87,134 @@ const AdminPanel = () => {
   const [uploadProgress, setUploadProgress] = useState<{[key: string]: number}>({});
   const [isUploading, setIsUploading] = useState<{[key: string]: boolean}>({});
 
-  const addMcqQuestion = useMutation(
-    async (data: MCQData) => {
+  const addMcqQuestion = useMutation({
+    mutationFn: async (data: MCQData) => {
       const { data: response, error } = await supabase
         .from('mcq_questions')
         .insert([data]);
       if (error) throw error;
       return response;
     },
-    {
-      onSuccess: () => {
-        toast({
-          title: "সফল",
-          description: "MCQ প্রশ্ন যোগ করা হয়েছে!",
-        });
-        setMcqData({
-          question: '',
-          option_a: '',
-          option_b: '',
-          option_c: '',
-          option_d: '',
-          correct_answer: 'A',
-          subject: '',
-          chapter: '',
-          board: '',
-          year: new Date().getFullYear()
-        });
-      },
-      onError: (error: any) => {
-        toast({
-          title: "ত্রুটি",
-          description: "MCQ প্রশ্ন যোগ করতে সমস্যা হয়েছে।",
-          variant: "destructive"
-        });
-        console.error("Error adding MCQ question:", error);
-      },
-    }
-  );
+    onSuccess: () => {
+      toast({
+        title: "সফল",
+        description: "MCQ প্রশ্ন যোগ করা হয়েছে!",
+      });
+      setMcqData({
+        question: '',
+        option_a: '',
+        option_b: '',
+        option_c: '',
+        option_d: '',
+        correct_answer: 'A',
+        subject: '',
+        chapter: '',
+        board: '',
+        year: new Date().getFullYear()
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "ত্রুটি",
+        description: "MCQ প্রশ্ন যোগ করতে সমস্যা হয়েছে।",
+        variant: "destructive"
+      });
+      console.error("Error adding MCQ question:", error);
+    },
+  });
 
-  const addBoardQuestion = useMutation(
-    async (data: BoardData) => {
+  const addBoardQuestion = useMutation({
+    mutationFn: async (data: BoardData) => {
       const { data: response, error } = await supabase
         .from('board_questions')
         .insert([data]);
       if (error) throw error;
       return response;
     },
-    {
-      onSuccess: () => {
-        toast({
-          title: "সফল",
-          description: "বোর্ড প্রশ্ন যোগ করা হয়েছে!",
-        });
-        setBoardData({
-          title: '',
-          subject: '',
-          board: '',
-          year: new Date().getFullYear(),
-          file_url: '',
-          file_type: ''
-        });
-      },
-      onError: (error: any) => {
-        toast({
-          title: "ত্রুটি",
-          description: "বোর্ড প্রশ্ন যোগ করতে সমস্যা হয়েছে।",
-          variant: "destructive"
-        });
-        console.error("Error adding board question:", error);
-      },
-    }
-  );
+    onSuccess: () => {
+      toast({
+        title: "সফল",
+        description: "বোর্ড প্রশ্ন যোগ করা হয়েছে!",
+      });
+      setBoardData({
+        title: '',
+        subject: '',
+        board: '',
+        year: new Date().getFullYear(),
+        file_url: '',
+        file_type: ''
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "ত্রুটি",
+        description: "বোর্ড প্রশ্ন যোগ করতে সমস্যা হয়েছে।",
+        variant: "destructive"
+      });
+      console.error("Error adding board question:", error);
+    },
+  });
 
-  const addNctbBook = useMutation(
-    async (data: NCTBData) => {
+  const addNctbBook = useMutation({
+    mutationFn: async (data: NCTBData) => {
       const { data: response, error } = await supabase
         .from('nctb_books')
         .insert([data]);
       if (error) throw error;
       return response;
     },
-    {
-      onSuccess: () => {
-        toast({
-          title: "সফল",
-          description: "NCTB বই যোগ করা হয়েছে!",
-        });
-        setNctbData({
-          title: '',
-          subject: '',
-          class_level: '',
-          file_url: '',
-          file_type: ''
-        });
-      },
-      onError: (error: any) => {
-        toast({
-          title: "ত্রুটি",
-          description: "NCTB বই যোগ করতে সমস্যা হয়েছে।",
-          variant: "destructive"
-        });
-        console.error("Error adding NCTB book:", error);
-      },
-    }
-  );
+    onSuccess: () => {
+      toast({
+        title: "সফল",
+        description: "NCTB বই যোগ করা হয়েছে!",
+      });
+      setNctbData({
+        title: '',
+        subject: '',
+        class_level: '6',
+        file_url: '',
+        file_type: ''
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "ত্রুটি",
+        description: "NCTB বই যোগ করতে সমস্যা হয়েছে।",
+        variant: "destructive"
+      });
+      console.error("Error adding NCTB book:", error);
+    },
+  });
 
-  const addNote = useMutation(
-    async (data: NotesData) => {
+  const addNote = useMutation({
+    mutationFn: async (data: NotesData) => {
       const { data: response, error } = await supabase
         .from('notes')
         .insert([data]);
       if (error) throw error;
       return response;
     },
-    {
-      onSuccess: () => {
-        toast({
-          title: "সফল",
-          description: "নোট যোগ করা হয়েছে!",
-        });
-        setNotesData({
-          title: '',
-          subject: '',
-          file_url: '',
-          file_type: ''
-        });
-      },
-      onError: (error: any) => {
-        toast({
-          title: "ত্রুটি",
-          description: "নোট যোগ করতে সমস্যা হয়েছে।",
-          variant: "destructive"
-        });
-        console.error("Error adding note:", error);
-      },
-    }
-  );
+    onSuccess: () => {
+      toast({
+        title: "সফল",
+        description: "নোট যোগ করা হয়েছে!",
+      });
+      setNotesData({
+        title: '',
+        subject: '',
+        file_url: '',
+        file_type: ''
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "ত্রুটি",
+        description: "নোট যোগ করতে সমস্যা হয়েছে।",
+        variant: "destructive"
+      });
+      console.error("Error adding note:", error);
+    },
+  });
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>, section: string) => {
     const file = event.target.files?.[0];
@@ -279,7 +271,8 @@ const AdminPanel = () => {
           file_url: fileUrl,
           file_type: fileType,
           title: nctbData.title || selectedFile.name.split('.')[0],
-          subject: nctbData.subject || 'সাধারণ'
+          subject: nctbData.subject || 'সাধারণ',
+          class_level: parseInt(nctbData.class_level)
         });
       } else if (section === 'notes') {
         await addNote.mutateAsync({
