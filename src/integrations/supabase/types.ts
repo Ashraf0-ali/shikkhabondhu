@@ -143,8 +143,10 @@ export type Database = {
       }
       mcq_questions: {
         Row: {
+          admission_info: Json | null
           board: string | null
           chapter: string | null
+          class_level: string | null
           correct_answer: string
           created_at: string
           id: string
@@ -160,8 +162,10 @@ export type Database = {
           year: number | null
         }
         Insert: {
+          admission_info?: Json | null
           board?: string | null
           chapter?: string | null
+          class_level?: string | null
           correct_answer: string
           created_at?: string
           id?: string
@@ -177,8 +181,10 @@ export type Database = {
           year?: number | null
         }
         Update: {
+          admission_info?: Json | null
           board?: string | null
           chapter?: string | null
+          class_level?: string | null
           correct_answer?: string
           created_at?: string
           id?: string

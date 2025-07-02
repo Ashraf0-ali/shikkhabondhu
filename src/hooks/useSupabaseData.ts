@@ -1,3 +1,4 @@
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -178,14 +179,21 @@ export const useSupabaseData = () => {
     }
   });
 
-  // Bulk MCQ import
+  // Bulk MCQ import with class_level and admission_info support
   const importMCQsFromCSV = useMutation({
     mutationFn: async (mcqs: TablesInsert<'mcq_questions'>[]) => {
+      // Process each MCQ to ensure proper class_level and admission_info
+      const processedMCQs = mcqs.map(mcq => ({
+        ...mcq,
+        class_level: mcq.class_level || 'class_9_10', // Default class level
+        admission_info: mcq.admission_info || {} // Default empty object
+      }));
+
       const { error } = await supabase
         .from('mcq_questions')
-        .insert(mcqs);
+        .insert(processedMCQs);
       if (error) throw error;
-      return mcqs.length;
+      return processedMCQs.length;
     },
     onSuccess: (count) => {
       queryClient.invalidateQueries({ queryKey: ['mcq_questions'] });
@@ -232,22 +240,6 @@ export const useSupabaseData = () => {
     }
   });
 
-  const handleMCQAdd = () => {
-    // This function will be called from the component
-  };
-
-  const handleFileUpload = () => {
-    // This function will be called from the component
-  };
-
-  const handleQuoteAdd = () => {
-    // This function will be called from the component
-  };
-
-  const handleApiKeyAdd = () => {
-    // This function will be called from the component
-  };
-
   return {
     addMCQQuestion,
     addBoardQuestion,
@@ -256,10 +248,6 @@ export const useSupabaseData = () => {
     addMotivationalQuote,
     addApiKey,
     addTipsFeedback,
-    importMCQsFromCSV,
-    handleMCQAdd,
-    handleFileUpload,
-    handleQuoteAdd,
-    handleApiKeyAdd
+    importMCQsFromCSV
   };
 };

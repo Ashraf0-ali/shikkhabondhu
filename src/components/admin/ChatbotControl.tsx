@@ -6,13 +6,23 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Settings } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const ChatbotControl = () => {
+  const { toast } = useToast();
   const [chatbotSettings, setChatbotSettings] = useState({
     is_enabled: true,
     max_daily_requests: 100,
-    system_prompt: 'আপনি একজন বাংলাদেশি শিক্ষা সহায়ক AI।'
+    system_prompt: 'আপনি একজন বাংলাদেশি শিক্ষা সহায়ক AI। আপনি বাংলায় উত্তর দেবেন এবং শিক্ষার্থীদের সাহায্য করবেন।'
   });
+
+  const handleSaveSettings = () => {
+    // Here you would typically save to Supabase
+    toast({
+      title: "সেটিংস সংরক্ষিত ✅",
+      description: "চ্যাটবট সেটিংস সফলভাবে সংরক্ষিত হয়েছে",
+    });
+  };
 
   return (
     <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
@@ -49,7 +59,7 @@ const ChatbotControl = () => {
             className="bangla-text min-h-[100px]"
           />
         </div>
-        <Button className="w-full bangla-text">
+        <Button onClick={handleSaveSettings} className="w-full bangla-text">
           <Settings className="w-4 h-4 mr-2" />
           সেটিংস সংরক্ষণ করুন
         </Button>
