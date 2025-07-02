@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, MessageCircle, Search, BrainCircuit, GraduationCap, Quote } from 'lucide-react';
+import { CalendarDays, MessageCircle, Search, BrainCircuit, GraduationCap, Quote, Target } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -48,7 +48,7 @@ const HomePage = () => {
         <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
           <CardHeader className="text-center py-8">
             <CardTitle className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent mb-4 bangla-text">
-              🌟 শিক্ষার আলো
+              🌟 শিক্ষা বন্ধু AI
             </CardTitle>
             <p className="text-lg text-gray-600 dark:text-gray-300 bangla-text">
               আপনার শিক্ষার সহায়ক - MCQ, AI চ্যাট, এবং আরও অনেক কিছু
@@ -58,24 +58,24 @@ const HomePage = () => {
 
         {/* Motivational Quote */}
         {currentQuote && (
-          <Card className="bg-gradient-to-r from-orange-400 via-pink-500 to-purple-600 text-white shadow-2xl">
-            <CardContent className="p-8 text-center">
-              <Quote className="w-12 h-12 mx-auto mb-4 opacity-80" />
-              <blockquote className="text-xl font-medium bangla-text mb-4">
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
+            <CardContent className="p-6 text-center">
+              <Quote className="w-8 h-8 mx-auto mb-3 text-gray-500" />
+              <blockquote className="text-lg font-medium bangla-text mb-3 text-gray-700 dark:text-gray-300">
                 "{currentQuote.quote}"
               </blockquote>
               {currentQuote.author && (
-                <p className="text-sm opacity-90 bangla-text">
+                <p className="text-sm text-gray-500 bangla-text">
                   - {currentQuote.author}
                 </p>
               )}
               {quotes && quotes.length > 1 && (
-                <div className="flex justify-center mt-4 space-x-2">
+                <div className="flex justify-center mt-3 space-x-1">
                   {quotes.map((_, index) => (
                     <div
                       key={index}
                       className={`w-2 h-2 rounded-full ${
-                        index === currentQuoteIndex ? 'bg-white' : 'bg-white/40'
+                        index === currentQuoteIndex ? 'bg-blue-500' : 'bg-gray-300'
                       }`}
                     />
                   ))}
@@ -87,19 +87,27 @@ const HomePage = () => {
 
         {/* Features */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/mcqs')}>
-            <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
-              <CalendarDays className="w-10 h-10 text-blue-500" />
-              <h3 className="text-xl font-semibold bangla-text text-center">MCQ অনুশীলন</h3>
-              <p className="text-gray-600 dark:text-gray-300 bangla-text text-center">বিভিন্ন বিষয়ের MCQ প্রশ্ন অনুশীলন করুন</p>
-            </CardContent>
-          </Card>
-
           <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/chat')}>
             <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
               <MessageCircle className="w-10 h-10 text-green-500" />
               <h3 className="text-xl font-semibold bangla-text text-center">AI চ্যাট</h3>
               <p className="text-gray-600 dark:text-gray-300 bangla-text text-center">AI এর সাথে আপনার যেকোনো প্রশ্নের উত্তর খুঁজুন</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/mcqs')}>
+            <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
+              <CalendarDays className="w-10 h-10 text-blue-500" />
+              <h3 className="text-xl font-semibold bangla-text text-center">MCQ প্রশ্ন</h3>
+              <p className="text-gray-600 dark:text-gray-300 bangla-text text-center">বিভিন্ন বিষয়ের MCQ প্রশ্ন দেখুন</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/practice')}>
+            <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
+              <Target className="w-10 h-10 text-purple-500" />
+              <h3 className="text-xl font-semibold bangla-text text-center">MCQ অনুশীলন</h3>
+              <p className="text-gray-600 dark:text-gray-300 bangla-text text-center">ইন্টারেক্টিভ MCQ অনুশীলন করুন</p>
             </CardContent>
           </Card>
 

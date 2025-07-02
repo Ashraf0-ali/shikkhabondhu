@@ -8,6 +8,7 @@ import HomePage from "./components/HomePage";
 import ChatInterface from "./components/ChatInterface";
 import AdminPanel from "./components/AdminPanel";
 import MCQSection from "./components/MCQSection";
+import MCQPracticeSection from "./components/MCQPracticeSection";
 import TipsSection from "./components/TipsSection";
 import QuizSection from "./components/QuizSection";
 import SearchInterface from "./components/SearchInterface";
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/" element={<HomePage />} />
             <Route path="/chat" element={<ChatInterface />} />
             <Route path="/mcqs" element={<MCQSection />} />
+            <Route path="/practice" element={<MCQPracticeSection />} />
             <Route path="/admin" element={<AdminPanel />} />
             <Route path="/tips" element={<TipsSection />} />
             <Route path="/quiz" element={<QuizSection />} />
