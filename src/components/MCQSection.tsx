@@ -10,13 +10,13 @@ import type { Tables } from '@/integrations/supabase/types';
 type MCQQuestion = Tables<'mcq_questions'>;
 
 const MCQSection = () => {
-  const [selectedSubject, setSelectedSubject] = useState('');
-  const [selectedBoard, setSelectedBoard] = useState('');
-  const [selectedYear, setSelectedYear] = useState('');
-  const [selectedClassLevel, setSelectedClassLevel] = useState('');
-  const [selectedGroup, setSelectedGroup] = useState('');
-  const [selectedUnit, setSelectedUnit] = useState('');
-  const [selectedUniversity, setSelectedUniversity] = useState('');
+  const [selectedSubject, setSelectedSubject] = useState<string>('all');
+  const [selectedBoard, setSelectedBoard] = useState<string>('all');
+  const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [selectedClassLevel, setSelectedClassLevel] = useState<string>('all');
+  const [selectedGroup, setSelectedGroup] = useState<string>('all');
+  const [selectedUnit, setSelectedUnit] = useState<string>('all');
+  const [selectedUniversity, setSelectedUniversity] = useState<string>('all');
   const { toast } = useToast();
 
   const { data: questions, isLoading, error } = useQuery({
@@ -46,17 +46,17 @@ const MCQSection = () => {
   const uniqueUniversities = [...new Set(universities)] as string[];
 
   const filteredQuestions = questions?.filter(q => {
-    const matchesSubject = !selectedSubject || q.subject === selectedSubject;
-    const matchesBoard = !selectedBoard || q.board === selectedBoard;
-    const matchesYear = !selectedYear || q.year === parseInt(selectedYear);
-    const matchesClassLevel = !selectedClassLevel || q.class_level === selectedClassLevel;
+    const matchesSubject = selectedSubject === 'all' || q.subject === selectedSubject;
+    const matchesBoard = selectedBoard === 'all' || q.board === selectedBoard;
+    const matchesYear = selectedYear === 'all' || q.year === parseInt(selectedYear);
+    const matchesClassLevel = selectedClassLevel === 'all' || q.class_level === selectedClassLevel;
     
     // Additional filtering for admission questions
     if (selectedClassLevel === 'admission' && q.admission_info) {
       const admissionInfo = q.admission_info as any;
-      const matchesGroup = !selectedGroup || admissionInfo?.group === selectedGroup;
-      const matchesUnit = !selectedUnit || admissionInfo?.unit === selectedUnit;
-      const matchesUniversity = !selectedUniversity || admissionInfo?.university === selectedUniversity;
+      const matchesGroup = selectedGroup === 'all' || admissionInfo?.group === selectedGroup;
+      const matchesUnit = selectedUnit === 'all' || admissionInfo?.unit === selectedUnit;
+      const matchesUniversity = selectedUniversity === 'all' || admissionInfo?.university === selectedUniversity;
       
       return matchesSubject && matchesBoard && matchesYear && matchesClassLevel && 
              matchesGroup && matchesUnit && matchesUniversity;
@@ -66,9 +66,9 @@ const MCQSection = () => {
   }) || [];
 
   const resetAdmissionFilters = () => {
-    setSelectedGroup('');
-    setSelectedUnit('');
-    setSelectedUniversity('');
+    setSelectedGroup('all');
+    setSelectedUnit('all');
+    setSelectedUniversity('all');
   };
 
   const handleClassLevelChange = (value: string) => {
@@ -108,7 +108,7 @@ const MCQSection = () => {
                     <SelectValue placeholder="ক্লাস নির্বাচন করুন" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">সব ক্লাস</SelectItem>
+                    <SelectItem value="all">সব ক্লাস</SelectItem>
                     <SelectItem value="class_9_10">নবম-দশম শ্রেণী</SelectItem>
                     <SelectItem value="class_11_12">একাদশ-দ্বাদশ শ্রেণী</SelectItem>
                     <SelectItem value="admission">ভর্তি পরীক্ষা</SelectItem>
@@ -126,7 +126,7 @@ const MCQSection = () => {
                         <SelectValue placeholder="গ্রুপ নির্বাচন করুন" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">সব গ্রুপ</SelectItem>
+                        <SelectItem value="all">সব গ্রুপ</SelectItem>
                         <SelectItem value="science">বিজ্ঞান</SelectItem>
                         <SelectItem value="arts">মানবিক</SelectItem>
                         <SelectItem value="commerce">ব্যবসায় শিক্ষা</SelectItem>
@@ -141,7 +141,7 @@ const MCQSection = () => {
                         <SelectValue placeholder="ইউনিট নির্বাচন করুন" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">সব ইউনিট</SelectItem>
+                        <SelectItem value="all">সব ইউনিট</SelectItem>
                         <SelectItem value="A">ক ইউনিট</SelectItem>
                         <SelectItem value="B">খ ইউনিট</SelectItem>
                         <SelectItem value="C">গ ইউনিট</SelectItem>
@@ -157,7 +157,7 @@ const MCQSection = () => {
                         <SelectValue placeholder="বিশ্ববিদ্যালয় নির্বাচন করুন" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">সব বিশ্ববিদ্যালয়</SelectItem>
+                        <SelectItem value="all">সব বিশ্ববিদ্যালয়</SelectItem>
                         {uniqueUniversities.map(university => (
                           <SelectItem key={university} value={university}>{university}</SelectItem>
                         ))}
@@ -174,7 +174,7 @@ const MCQSection = () => {
                     <SelectValue placeholder="বিষয় নির্বাচন করুন" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">সব বিষয়</SelectItem>
+                    <SelectItem value="all">সব বিষয়</SelectItem>
                     {subjects.map(subject => (
                       <SelectItem key={subject} value={subject}>{subject}</SelectItem>
                     ))}
@@ -189,7 +189,7 @@ const MCQSection = () => {
                     <SelectValue placeholder="বোর্ড নির্বাচন করুন" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">সব বোর্ড</SelectItem>
+                    <SelectItem value="all">সব বোর্ড</SelectItem>
                     {boards.map(board => (
                       <SelectItem key={board} value={board}>{board}</SelectItem>
                     ))}
@@ -204,7 +204,7 @@ const MCQSection = () => {
                     <SelectValue placeholder="বছর নির্বাচন করুন" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">সব বছর</SelectItem>
+                    <SelectItem value="all">সব বছর</SelectItem>
                     {years.map(year => (
                       <SelectItem key={year} value={year}>{year}</SelectItem>
                     ))}
