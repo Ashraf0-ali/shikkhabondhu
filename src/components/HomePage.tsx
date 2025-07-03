@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, MessageCircle, Search, BrainCircuit, GraduationCap, Quote, Target } from 'lucide-react';
+import { CalendarDays, MessageCircle, Search, BrainCircuit, GraduationCap, Quote, Target, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -56,25 +56,25 @@ const HomePage = () => {
           </CardHeader>
         </Card>
 
-        {/* Motivational Quote */}
+        {/* Motivational Quote - Smaller Design */}
         {currentQuote && (
-          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
-            <CardContent className="p-6 text-center">
-              <Quote className="w-8 h-8 mx-auto mb-3 text-gray-500" />
-              <blockquote className="text-lg font-medium bangla-text mb-3 text-gray-700 dark:text-gray-300">
+          <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-xl border-white/20 shadow-lg">
+            <CardContent className="p-4 text-center">
+              <Quote className="w-6 h-6 mx-auto mb-2 text-gray-400" />
+              <blockquote className="text-base font-medium bangla-text mb-2 text-gray-700 dark:text-gray-300">
                 "{currentQuote.quote}"
               </blockquote>
               {currentQuote.author && (
-                <p className="text-sm text-gray-500 bangla-text">
+                <p className="text-xs text-gray-500 bangla-text">
                   - {currentQuote.author}
                 </p>
               )}
               {quotes && quotes.length > 1 && (
-                <div className="flex justify-center mt-3 space-x-1">
+                <div className="flex justify-center mt-2 space-x-1">
                   {quotes.map((_, index) => (
                     <div
                       key={index}
-                      className={`w-2 h-2 rounded-full ${
+                      className={`w-1.5 h-1.5 rounded-full ${
                         index === currentQuoteIndex ? 'bg-blue-500' : 'bg-gray-300'
                       }`}
                     />
@@ -135,6 +135,51 @@ const HomePage = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* NCTB Books Section */}
+        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
+          <CardHeader>
+            <CardTitle className="text-2xl font-bold text-center bangla-text flex items-center justify-center gap-2">
+              <BookOpen className="w-8 h-8 text-blue-500" />
+              📚 NCTB বই
+            </CardTitle>
+            <p className="text-center text-gray-600 dark:text-gray-300 bangla-text">
+              সরকারি পাঠ্যবই পড়ুন এবং ডাউনলোড করুন
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {[
+                { class: "৬ষ্ঠ শ্রেণী", level: 6 },
+                { class: "৭ম শ্রেণী", level: 7 },
+                { class: "৮ম শ্রেণী", level: 8 },
+                { class: "৯ম-১০ম শ্রেণী", level: 9 }
+              ].map((item) => (
+                <Button
+                  key={item.level}
+                  variant="outline"
+                  className="h-20 flex flex-col items-center justify-center space-y-2 bangla-text hover:bg-blue-50 dark:hover:bg-gray-700"
+                  onClick={() => {
+                    // Navigate to a books page with class filter
+                    navigate(`/search?type=books&class=${item.level}`);
+                  }}
+                >
+                  <BookOpen className="w-6 h-6 text-blue-500" />
+                  <span className="text-sm font-medium">{item.class}</span>
+                </Button>
+              ))}
+            </div>
+            <div className="mt-4 text-center">
+              <Button
+                variant="outline"
+                className="bangla-text"
+                onClick={() => navigate('/search?type=books')}
+              >
+                সব বই দেখুন
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Footer */}
         <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,7 +24,7 @@ const ChatInterface = () => {
   const { toast } = useToast();
 
   // Check if chatbot is enabled
-  const { data: chatbotSettings } = useQuery({
+  const { data: chatbotSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ['chatbot_settings'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -124,6 +125,25 @@ const ChatInterface = () => {
       sendMessage();
     }
   };
+
+  // Show loading while checking settings
+  if (isLoadingSettings) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl max-w-md w-full">
+          <CardContent className="p-8 text-center">
+            <Loader2 className="w-16 h-16 mx-auto mb-4 text-blue-500 animate-spin" />
+            <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-2 bangla-text">
+              চ্যাটবট লোড হচ্ছে...
+            </h2>
+            <p className="text-gray-600 dark:text-gray-400 bangla-text">
+              অনুগ্রহ করে অপেক্ষা করুন
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   if (!chatbotSettings?.is_enabled) {
     return (
