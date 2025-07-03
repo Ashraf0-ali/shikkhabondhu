@@ -19,6 +19,28 @@ const CSVImport = () => {
     }
   };
 
+  const parseCSVLine = (line: string): string[] => {
+    const result: string[] = [];
+    let current = '';
+    let inQuotes = false;
+    
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      
+      if (char === '"') {
+        inQuotes = !inQuotes;
+      } else if (char === ',' && !inQuotes) {
+        result.push(current.trim());
+        current = '';
+      } else {
+        current += char;
+      }
+    }
+    
+    result.push(current.trim());
+    return result;
+  };
+
   const handleCSVImport = async () => {
     if (!selectedFile) {
       toast({
@@ -29,27 +51,63 @@ const CSVImport = () => {
       return;
     }
 
-    const text = await selectedFile.text();
-    const lines = text.split('\n').filter(line => line.trim());
-    const headers = lines[0].split(',');
-    
-    const mcqs = lines.slice(1).map(line => {
-      const values = line.split(',');
-      return {
-        question: values[0] || '',
-        option_a: values[1] || '',
-        option_b: values[2] || '',
-        option_c: values[3] || '',
-        option_d: values[4] || '',
-        correct_answer: (values[5] || 'A') as 'A' | 'B' | 'C' | 'D',
-        subject: values[6] || '',
-        chapter: values[7] || '',
-        board: values[8] || '',
-        year: parseInt(values[9]) || new Date().getFullYear()
-      };
-    });
+    try {
+      const text = await selectedFile.text();
+      const lines = text.split('\n').filter(line => line.trim());
+      
+      if (lines.length < 2) {
+        toast({
+          title: "ভুল ফরম্যাট",
+          description: "CSV ফাইলে কমপক্ষে হেডার এবং একটি ডাটা লাইন থাকতে হবে",
+          variant: "destructive"
+        });
+        return;
+      }
 
-    importMCQsFromCSV.mutate(mcqs);
+      const headers = parseCSVLine(lines[0]);
+      console.log('CSV Headers:', headers);
+      
+      const mcqs = lines.slice(1).map((line, index) => {
+        const values = parseCSVLine(line);
+        console.log(`Row ${index + 1} values:`, values);
+        
+        // Parse admission_info if it exists and is valid JSON
+        let admissionInfo = {};
+        if (values[10]) { // admission_info column
+          try {
+            admissionInfo = JSON.parse(values[10]);
+          } catch (e) {
+            console.warn(`Invalid JSON in admission_info for row ${index + 1}:`, values[10]);
+            admissionInfo = {};
+          }
+        }
+
+        return {
+          question: values[0] || '',
+          option_a: values[1] || '',
+          option_b: values[2] || '',
+          option_c: values[3] || '',
+          option_d: values[4] || '',
+          correct_answer: (values[5] || 'A') as 'A' | 'B' | 'C' | 'D',
+          subject: values[6] || '',
+          chapter: values[7] || '',
+          board: values[8] || '',
+          year: parseInt(values[9]) || new Date().getFullYear(),
+          class_level: values[10] || 'class_9_10', // Default to class_9_10
+          admission_info: admissionInfo
+        };
+      });
+
+      console.log('Processed MCQs:', mcqs);
+      importMCQsFromCSV.mutate(mcqs);
+    } catch (error) {
+      console.error('CSV processing error:', error);
+      toast({
+        title: "ফাইল প্রসেসিং এরর",
+        description: "CSV ফাইল প্রসেস করতে সমস্যা হয়েছে",
+        variant: "destructive"
+      });
+    }
   };
 
   return (
@@ -67,8 +125,15 @@ const CSVImport = () => {
             className="bangla-text"
           />
         </div>
-        <div className="text-sm text-gray-600 bangla-text">
-          <p>CSV ফরম্যাট: question,option_a,option_b,option_c,option_d,correct_answer,subject,chapter,board,year</p>
+        <div className="text-sm text-gray-600 bangla-text space-y-2">
+          <p><strong>সব ধরনের প্রশ্নের জন্য CSV ফরম্যাট:</strong></p>
+          <code className="block bg-gray-100 p-2 rounded text-xs">
+            question,option_a,option_b,option_c,option_d,correct_answer,subject,chapter,board,year,class_level,admission_info
+          </code>
+          <div className="mt-2">
+            <p><strong>class_level:</strong> class_9_10, class_11_12, অথবা admission</p>
+            <p><strong>admission_info:</strong> ভর্তি পরীক্ষার জন্য JSON (যেমন: {`{"university":"ঢাকা বিশ্ববিদ্যালয়","unit":"A"}`})</p>
+          </div>
         </div>
         <Button 
           onClick={handleCSVImport} 
