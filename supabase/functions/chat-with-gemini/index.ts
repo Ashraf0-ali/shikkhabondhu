@@ -18,16 +18,29 @@ serve(async (req) => {
     // Validate API key
     const apiKeyError = validateApiKey(geminiApiKey);
     if (apiKeyError) {
+      console.error('API key validation failed');
       return new Response(JSON.stringify({ 
-        error: apiKeyError,
-        details: 'GEMINI_API_KEY not configured'
+        error: 'AI সেবা বর্তমানে উপলব্ধ নয়। পরে আবার চেষ্টা করুন।'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    const { message, chatHistory } = await req.json();
+    let requestBody;
+    try {
+      requestBody = await req.json();
+    } catch (e) {
+      console.error('JSON parse error:', e);
+      return new Response(JSON.stringify({ 
+        error: 'অবৈধ অনুরোধ। আবার চেষ্টা করুন।'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const { message, chatHistory } = requestBody;
 
     // Validate request
     const requestError = validateRequest(message);
@@ -40,31 +53,57 @@ serve(async (req) => {
       });
     }
 
-    // Initialize Supabase client
-    const supabase = createSupabaseClient();
-
-    console.log('Fetching context from database...');
+    console.log('Processing chat request...');
+    console.log('Message length:', message?.length || 0);
     console.log('Chat history length:', chatHistory?.length || 0);
 
+    // Initialize Supabase client with error handling
+    let supabase;
+    try {
+      supabase = createSupabaseClient();
+    } catch (e) {
+      console.error('Database connection error:', e);
+      return new Response(JSON.stringify({ 
+        error: 'ডেটাবেস সংযোগে সমস্যা। আবার চেষ্টা করুন।'
+      }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Build base context (smaller for faster processing)
-    let context = buildBaseContext(chatHistory?.slice(-4) || []); // Only last 4 messages
+    let context = buildBaseContext(chatHistory?.slice(-3) || []); // Only last 3 messages for speed
 
     // Handle book requests
     const bookRequest = detectBookRequest(message);
     let foundBooks: any[] = [];
     
     if (bookRequest) {
-      foundBooks = await fetchBooks(supabase);
-      
-      if (foundBooks.length > 0) {
-        context += buildBookContext(foundBooks.slice(0, 3), message); // Limit to 3 books
-      } else {
-        context += `\n\n📚 দুঃখিত, আমার কাছে এই মুহূর্তে কোনো NCTB বই নেই। তবে আপনি চাইলে আমি অন্যভাবে সাহায্য করতে পারি।`;
+      try {
+        foundBooks = await fetchBooks(supabase);
+        
+        if (foundBooks.length > 0) {
+          context += buildBookContext(foundBooks.slice(0, 2), message); // Limit to 2 books for speed
+        } else {
+          context += `\n\n📚 দুঃখিত, আমার কাছে এই মুহূর্তে কোনো NCTB বই নেই। তবে আপনি চাইলে আমি অন্যভাবে সাহায্য করতে পারি।`;
+        }
+      } catch (e) {
+        console.error('Book fetch error:', e);
+        // Continue without books
       }
     }
 
     // Add other educational data (limited for speed)
-    const { mcq, board, notes } = await fetchEducationalData(supabase);
+    let mcq = [], board = [], notes = [];
+    try {
+      const eduData = await fetchEducationalData(supabase);
+      mcq = eduData.mcq;
+      board = eduData.board;
+      notes = eduData.notes;
+    } catch (e) {
+      console.error('Educational data fetch error:', e);
+      // Continue without additional data
+    }
 
     console.log('Database context fetched:', {
       mcq: mcq.length,
@@ -75,7 +114,7 @@ serve(async (req) => {
 
     // Add MCQ context if requested (limited)
     if (detectMCQRequest(message) && mcq.length > 0) {
-      context += buildMCQContext(mcq.slice(0, 5)); // Limit to 5 MCQs
+      context += buildMCQContext(mcq.slice(0, 3)); // Limit to 3 MCQs for speed
     }
 
     // Add final instructions
@@ -89,6 +128,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
+    console.error('Function error:', error);
     return handleError(error);
   }
 });
