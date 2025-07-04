@@ -15,12 +15,10 @@ serve(async (req) => {
   try {
     const geminiApiKey = Deno.env.get('GEMINI_API_KEY');
     
-    // Validate API key
-    const apiKeyError = validateApiKey(geminiApiKey);
-    if (apiKeyError) {
-      console.error('API key validation failed');
+    if (!geminiApiKey) {
+      console.error('Gemini API key not found');
       return new Response(JSON.stringify({ 
-        error: 'AI সেবা বর্তমানে উপলব্ধ নয়। পরে আবার চেষ্টা করুন।'
+        error: 'AI সেবা বর্তমানে উপলব্ধ নয়। পরে চেষ্টা করুন।'
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -42,86 +40,25 @@ serve(async (req) => {
 
     const { message, chatHistory } = requestBody;
 
-    // Validate request
-    const requestError = validateRequest(message);
-    if (requestError) {
+    if (!message || typeof message !== 'string' || message.trim() === '') {
       return new Response(JSON.stringify({ 
-        error: requestError 
+        error: 'অনুগ্রহ করে একটি বার্তা লিখুন।'
       }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
     }
 
-    console.log('Processing chat request...');
-    console.log('Message length:', message?.length || 0);
-    console.log('Chat history length:', chatHistory?.length || 0);
+    console.log('Processing chat request:', message.substring(0, 50) + '...');
 
-    // Initialize Supabase client with error handling
-    let supabase;
-    try {
-      supabase = createSupabaseClient();
-    } catch (e) {
-      console.error('Database connection error:', e);
-      return new Response(JSON.stringify({ 
-        error: 'ডেটাবেস সংযোগে সমস্যা। আবার চেষ্টা করুন।'
-      }), {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
+    // সরাসরি AI কল করি ডেটাবেস ছাড়া - দ্রুত রেসপন্সের জন্য
+    const context = `তুমি একজন বাংলাদেশী শিক্ষা সহায়ক AI। ছাত্রছাত্রীদের পড়াশোনায় সাহায্য কর।
 
-    // Build base context (smaller for faster processing)
-    let context = buildBaseContext(chatHistory?.slice(-3) || []); // Only last 3 messages for speed
+প্রশ্ন: ${message}
 
-    // Handle book requests
-    const bookRequest = detectBookRequest(message);
-    let foundBooks: any[] = [];
-    
-    if (bookRequest) {
-      try {
-        foundBooks = await fetchBooks(supabase);
-        
-        if (foundBooks.length > 0) {
-          context += buildBookContext(foundBooks.slice(0, 2), message); // Limit to 2 books for speed
-        } else {
-          context += `\n\n📚 দুঃখিত, আমার কাছে এই মুহূর্তে কোনো NCTB বই নেই। তবে আপনি চাইলে আমি অন্যভাবে সাহায্য করতে পারি।`;
-        }
-      } catch (e) {
-        console.error('Book fetch error:', e);
-        // Continue without books
-      }
-    }
+সংক্ষিপ্ত এবং সহায়ক উত্তর দাও। বাংলায় উত্তর দাও।`;
 
-    // Add other educational data (limited for speed)
-    let mcq = [], board = [], notes = [];
-    try {
-      const eduData = await fetchEducationalData(supabase);
-      mcq = eduData.mcq;
-      board = eduData.board;
-      notes = eduData.notes;
-    } catch (e) {
-      console.error('Educational data fetch error:', e);
-      // Continue without additional data
-    }
-
-    console.log('Database context fetched:', {
-      mcq: mcq.length,
-      board: board.length,
-      books: foundBooks.length,
-      notes: notes.length
-    });
-
-    // Add MCQ context if requested (limited)
-    if (detectMCQRequest(message) && mcq.length > 0) {
-      context += buildMCQContext(mcq.slice(0, 3)); // Limit to 3 MCQs for speed
-    }
-
-    // Add final instructions
-    context += buildFinalInstructions(message, foundBooks);
-
-    // Call Gemini API with faster settings
-    const reply = await callGeminiAPI(context, geminiApiKey!);
+    const reply = await callGeminiAPI(context, geminiApiKey);
 
     return new Response(JSON.stringify({ reply }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -129,6 +66,11 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Function error:', error);
-    return handleError(error);
+    return new Response(JSON.stringify({ 
+      error: 'AI সেবায় সমস্যা। আবার চেষ্টা করুন।'
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });

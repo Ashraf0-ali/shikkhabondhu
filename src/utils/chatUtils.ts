@@ -22,8 +22,8 @@ export const processFileContent = async (file: File): Promise<string> => {
 export const prepareChatHistory = (messages: Message[]): Message[] => {
   try {
     return messages
-      .filter(msg => msg.content && msg.content.trim() !== '' && msg.content !== 'আসসালামু আলাইকুম! আমি আপনার শিক্ষা সহায়ক AI। আপনার যেকোনো পড়াশোনার প্রশ্ন করতে পারেন। আমি MCQ, বোর্ড প্রশ্ন, এবং পাঠ্যবই নিয়ে সাহায্য করতে পারি। ফাইল আপলোড করেও প্রশ্ন করতে পারেন।')
-      .slice(-5); // Further reduced for faster processing
+      .filter(msg => msg.content && msg.content.trim() !== '')
+      .slice(-2); // শুধু শেষ ২টি মেসেজ - দ্রুততার জন্য
   } catch (error) {
     console.error('Chat history preparation error:', error);
     return [];
@@ -39,27 +39,29 @@ export const sendChatMessage = async (
   }
 
   try {
-    console.log('Sending message to AI:', message.substring(0, 100) + '...');
+    console.log('Sending message to AI...');
     
+    // টাইমআউট সেট করি - ১০ সেকেন্ড
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
     const { data, error } = await supabase.functions.invoke('chat-with-gemini', {
       body: {
         message: message,
-        chatHistory: chatHistory || []
+        chatHistory: prepareChatHistory(chatHistory || [])
       }
     });
+
+    clearTimeout(timeoutId);
 
     if (error) {
       console.error('Supabase function error:', error);
       throw new Error('AI সেবায় সংযোগ সমস্যা। আবার চেষ্টা করুন।');
     }
 
-    if (!data) {
-      throw new Error('AI থেকে কোনো উত্তর পাওয়া যায়নি।');
-    }
-
-    if (data.error) {
-      console.error('AI function returned error:', data.error);
-      throw new Error(data.error);
+    if (!data || data.error) {
+      console.error('AI function error:', data?.error);
+      throw new Error(data?.error || 'AI থেকে উত্তর পাওয়া যায়নি।');
     }
 
     if (!data.reply || data.reply.trim() === '') {
@@ -71,6 +73,9 @@ export const sendChatMessage = async (
     
   } catch (error) {
     console.error('Chat message error:', error);
+    if (error.name === 'AbortError') {
+      throw new Error('AI রেসপন্স টাইমআউট। আবার চেষ্টা করুন।');
+    }
     throw error;
   }
 };
@@ -82,28 +87,15 @@ export const getErrorMessage = (error: any): string => {
     return 'অজানা সমস্যা হয়েছে।';
   }
 
-  // Handle string errors
   if (typeof error === 'string') {
     return error;
   }
 
-  // Handle error objects
   if (error.message) {
     const message = error.message;
     
-    // Try to parse JSON error messages
-    try {
-      const parsedError = JSON.parse(message);
-      if (parsedError.error) {
-        return parsedError.error;
-      }
-    } catch (e) {
-      // Not a JSON error, continue with regular error handling
-    }
-    
-    // Handle specific error patterns
-    if (message.includes('প্রতি মিনিটে') || message.includes('খুব দ্রুত')) {
-      return message;
+    if (message.includes('টাইমআউট')) {
+      return 'AI রেসপন্স দেরি হচ্ছে। আবার চেষ্টা করুন।';
     }
     
     if (message.includes('AI সেবায়') || message.includes('সংযোগ সমস্যা')) {
@@ -116,10 +108,6 @@ export const getErrorMessage = (error: any): string => {
     
     if (message.includes('network') || message.includes('fetch')) {
       return 'ইন্টারনেট সংযোগ সমস্যা। আবার চেষ্টা করুন।';
-    }
-    
-    if (message.includes('API key')) {
-      return 'API কী সংক্রান্ত সমস্যা। কিছুক্ষণ পর চেষ্টা করুন।';
     }
     
     return message;
