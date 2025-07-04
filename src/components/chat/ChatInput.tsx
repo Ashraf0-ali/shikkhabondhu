@@ -75,6 +75,13 @@ const ChatInput = ({
     }
   };
 
+  const handleInputFocus = () => {
+    // For mobile, scroll the input into view when focused
+    setTimeout(() => {
+      inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 z-[100]">
       <div className="max-w-3xl mx-auto">
@@ -113,6 +120,7 @@ const ChatInput = ({
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={onKeyPress}
+              onFocus={handleInputFocus}
               placeholder="মেসেজ লিখুন..."
               className="pr-12 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-blue-500 bangla-text h-11 text-sm rounded-full"
               disabled={isLoading}
