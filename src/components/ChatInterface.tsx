@@ -331,19 +331,21 @@ const ChatInterface = () => {
               </p>
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={clearChatHistory}
-            className="text-xs bangla-text"
-          >
-            নতুন চ্যাট
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={clearChatHistory}
+              className="text-xs bangla-text"
+            >
+              নতুন চ্যাট
+            </Button>
+          </div>
         </div>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-hidden" style={{ paddingBottom: isKeyboardVisible ? '80px' : '80px' }}>
+      <div className="flex-1 overflow-hidden pb-24">
         <ScrollArea className="h-full px-4 py-4">
           <div className="max-w-3xl mx-auto space-y-4">
             {messages.map((message) => (
@@ -415,8 +417,8 @@ const ChatInterface = () => {
         </ScrollArea>
       </div>
 
-      {/* Input Area - Always visible at bottom */}
-      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
+      {/* Input Area - Fixed at bottom */}
+      <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 z-50">
         <div className="max-w-3xl mx-auto">
           {/* File Upload Preview */}
           {uploadedFile && (
