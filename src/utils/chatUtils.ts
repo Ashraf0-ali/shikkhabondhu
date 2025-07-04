@@ -30,9 +30,16 @@ export const sendChatMessage = async (
     }
   });
 
+  // Check for Supabase function invoke error
   if (error) {
     console.error('Function invoke error:', error);
     throw error;
+  }
+
+  // Check for errors returned in the response data
+  if (data && data.error) {
+    console.error('Function returned error:', data.error);
+    throw new Error(data.error);
   }
 
   if (!data || !data.reply) {
@@ -43,10 +50,26 @@ export const sendChatMessage = async (
 };
 
 export const getErrorMessage = (error: any): string => {
-  if (error.message?.includes('Functions')) {
-    return 'AI সেবায় সমস্যা। কিছুক্ষণ পর চেষ্টা করুন।';
-  } else if (error.message?.includes('network')) {
-    return 'ইন্টারনেট সংযোগ সমস্যা। আবার চেষ্টা করুন।';
+  // Try to parse JSON error messages from Gemini API
+  if (error.message && typeof error.message === 'string') {
+    try {
+      const parsedError = JSON.parse(error.message);
+      if (parsedError.error) {
+        return parsedError.error;
+      }
+    } catch (e) {
+      // Not a JSON error, continue with regular error handling
+    }
   }
+  
+  // Handle Supabase function errors
+  if (error.message?.includes('Functions') || error.message?.includes('FunctionsError')) {
+    return 'AI সেবায় সমস্যা। কিছুক্ষণ পর চেষ্টা করুন।';
+  } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+    return 'ইন্টারনেট সংযোগ সমস্যা। আবার চেষ্টা করুন।';
+  } else if (error.message?.includes('API key')) {
+    return 'API কী সংক্রান্ত সমস্যা। কিছুক্ষণ পর চেষ্টা করুন।';
+  }
+  
   return 'দুঃখিত, একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।';
 };
