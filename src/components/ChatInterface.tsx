@@ -24,9 +24,11 @@ const ChatInterface = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   // Check if chatbot is enabled
@@ -43,6 +45,74 @@ const ChatInterface = () => {
     }
   });
 
+  // Load messages from localStorage on component mount
+  useEffect(() => {
+    const savedMessages = localStorage.getItem('chatMessages');
+    if (savedMessages) {
+      try {
+        const parsedMessages = JSON.parse(savedMessages);
+        const messagesWithDates = parsedMessages.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+        setMessages(messagesWithDates);
+      } catch (error) {
+        console.error('Error loading chat history:', error);
+        // Set initial welcome message if no saved messages
+        setInitialMessage();
+      }
+    } else {
+      setInitialMessage();
+    }
+  }, []);
+
+  // Save messages to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      localStorage.setItem('chatMessages', JSON.stringify(messages));
+    }
+  }, [messages]);
+
+  const setInitialMessage = () => {
+    setMessages([{
+      id: '1',
+      content: 'আসসালামু আলাইকুম! আমি আপনার শিক্ষা সহায়ক AI। আপনার যেকোনো পড়াশোনার প্রশ্ন করতে পারেন। আমি MCQ, বোর্ড প্রশ্ন, এবং পাঠ্যবই নিয়ে সাহায্য করতে পারি। ফাইল আপলোড করেও প্রশ্ন করতে পারেন।',
+      role: 'assistant',
+      timestamp: new Date()
+    }]);
+  };
+
+  // Handle keyboard visibility for mobile
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const heightDiff = window.innerHeight - window.visualViewport.height;
+        setIsKeyboardVisible(heightDiff > 150);
+      }
+    };
+
+    const handleFocus = () => {
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 300);
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+    }
+
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      }
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -51,16 +121,6 @@ const ChatInterface = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
-
-  // Initial welcome message
-  useEffect(() => {
-    setMessages([{
-      id: '1',
-      content: 'আসসালামু আলাইকুম! আমি আপনার শিক্ষা সহায়ক AI। আপনার যেকোনো পড়াশোনার প্রশ্ন করতে পারেন। আমি MCQ, বোর্ড প্রশ্ন, এবং পাঠ্যবই নিয়ে সাহায্য করতে পারি। ফাইল আপলোড করেও প্রশ্ন করতে পারেন।',
-      role: 'assistant',
-      timestamp: new Date()
-    }]);
-  }, []);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -105,6 +165,15 @@ const ChatInterface = () => {
     } else {
       return <FileText className="w-4 h-4" />;
     }
+  };
+
+  const clearChatHistory = () => {
+    localStorage.removeItem('chatMessages');
+    setInitialMessage();
+    toast({
+      title: "চ্যাট হিস্ট্রি মুছে ফেলা হয়েছে",
+      description: "নতুন কথোপকথন শুরু করুন"
+    });
   };
 
   const sendMessage = async () => {
@@ -253,93 +322,97 @@ const ChatInterface = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-white dark:bg-gray-900">
-      {/* Header - Fixed */}
-      <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
-            <Bot className="w-5 h-5 text-white" />
+    <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
+      {/* Header */}
+      <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+              <Bot className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white bangla-text">
+                AI শিক্ষক
+              </h1>
+              <p className="text-sm text-green-600 dark:text-green-400 bangla-text">
+                অনলাইন
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-900 dark:text-white bangla-text">
-              AI শিক্ষক
-            </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 bangla-text">
-              আপনার ব্যক্তিগত পড়াশোনার সহায়ক
-            </p>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={clearChatHistory}
+            className="text-xs bangla-text"
+          >
+            নতুন চ্যাট
+          </Button>
         </div>
       </div>
 
-      {/* Messages Area - Scrollable with proper spacing for bottom navigation */}
-      <div className="flex-1 overflow-hidden" style={{ paddingBottom: '80px' }}>
+      {/* Messages Area */}
+      <div className={`flex-1 overflow-hidden ${isKeyboardVisible ? 'pb-2' : 'pb-20'}`}>
         <ScrollArea className="h-full px-4 py-4">
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="max-w-3xl mx-auto space-y-4">
             {messages.map((message) => (
-              <div key={message.id} className="flex gap-4">
-                {/* Avatar */}
-                <div className="flex-shrink-0">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                    message.role === 'user' 
-                      ? 'bg-blue-500' 
-                      : 'bg-green-500'
-                  }`}>
-                    {message.role === 'user' ? 
-                      <User className="w-5 h-5 text-white" /> : 
-                      <Bot className="w-5 h-5 text-white" />
-                    }
+              <div key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                {message.role === 'assistant' && (
+                  <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                    <Bot className="w-4 h-4 text-white" />
                   </div>
-                </div>
-
-                {/* Message Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="mb-2">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white bangla-text">
-                      {message.role === 'user' ? 'আপনি' : 'AI শিক্ষক'}
-                    </span>
-                    <span className="ml-2 text-xs text-gray-500">
-                      {message.timestamp.toLocaleTimeString()}
-                    </span>
-                  </div>
-                  
+                )}
+                
+                <div className={`max-w-[80%] ${message.role === 'user' ? 'order-1' : ''}`}>
                   {/* File attachment display */}
                   {message.hasFile && (
-                    <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
+                    <div className="mb-2 p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                       <div className="flex items-center gap-2">
                         {getFileIcon(message.fileType || '')}
-                        <span className="text-sm text-gray-700 dark:text-gray-300 bangla-text">
+                        <span className="text-sm text-blue-800 dark:text-blue-200 bangla-text">
                           {message.fileName}
                         </span>
                       </div>
                     </div>
                   )}
                   
-                  <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 max-w-none">
-                    <p className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 bangla-text leading-relaxed text-base">
+                  <div className={`p-3 rounded-2xl ${
+                    message.role === 'user' 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+                  }`}>
+                    <p className={`whitespace-pre-wrap bangla-text text-sm leading-relaxed ${
+                      message.role === 'user' ? 'text-white' : 'text-gray-800 dark:text-gray-200'
+                    }`}>
                       {message.content}
                     </p>
                   </div>
+                  
+                  <div className={`text-xs text-gray-500 mt-1 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
+                    {message.timestamp.toLocaleTimeString('bn-BD', { 
+                      hour: '2-digit', 
+                      minute: '2-digit' 
+                    })}
+                  </div>
                 </div>
+
+                {message.role === 'user' && (
+                  <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                )}
               </div>
             ))}
 
             {/* Loading indicator */}
             {isLoading && (
-              <div className="flex gap-4">
-                <div className="flex-shrink-0">
-                  <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
-                    <Bot className="w-5 h-5 text-white" />
-                  </div>
+              <div className="flex gap-3 justify-start">
+                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                  <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="flex-1">
-                  <div className="mb-2">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white bangla-text">
-                      AI শিক্ষক
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-4">
-                    <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
-                    <span className="text-gray-500 bangla-text">চিন্তা করছি...</span>
+                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-2xl">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-green-500" />
+                    <span className="text-gray-500 bangla-text text-sm">টাইপ করছি...</span>
                   </div>
                 </div>
               </div>
@@ -350,9 +423,9 @@ const ChatInterface = () => {
         </ScrollArea>
       </div>
 
-      {/* Input Area - Fixed at bottom with proper spacing */}
-      <div className="fixed bottom-16 left-0 right-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 z-10">
-        <div className="max-w-4xl mx-auto">
+      {/* Input Area */}
+      <div className={`${isKeyboardVisible ? 'fixed bottom-0' : 'fixed bottom-16'} left-0 right-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 z-20 transition-all duration-300`}>
+        <div className="max-w-3xl mx-auto">
           {/* File Upload Preview */}
           {uploadedFile && (
             <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
@@ -384,11 +457,18 @@ const ChatInterface = () => {
           <div className="flex gap-3">
             <div className="flex-1 relative">
               <Input
+                ref={inputRef}
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="আপনার প্রশ্ন লিখুন..."
-                className="pr-12 bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 bangla-text h-12 text-base"
+                onFocus={(e) => {
+                  // Scroll input into view on mobile
+                  setTimeout(() => {
+                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                  }, 300);
+                }}
+                placeholder="মেসেজ লিখুন..."
+                className="pr-12 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-blue-500 bangla-text h-11 text-sm rounded-full"
                 disabled={isLoading}
               />
               <input
@@ -405,7 +485,7 @@ const ChatInterface = () => {
                 size="sm"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading}
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-7 w-7 p-0 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-full"
               >
                 <Paperclip className="w-4 h-4" />
               </Button>
@@ -413,38 +493,14 @@ const ChatInterface = () => {
             <Button
               onClick={sendMessage}
               disabled={isLoading || (!inputMessage.trim() && !uploadedFile)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 h-12"
+              className="bg-blue-500 hover:bg-blue-600 text-white w-11 h-11 p-0 rounded-full"
             >
               {isLoading ? (
-                <Loader2 className="w-5 h-5 animate-spin" />
+                <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <Send className="w-5 h-5" />
+                <Send className="w-4 h-4" />
               )}
             </Button>
-          </div>
-
-          {/* Quick Suggestions */}
-          <div className="mt-3">
-            <div className="flex flex-wrap gap-2">
-              {[
-                "গণিতের সমস্যা সমাধান",
-                "ইংরেজি গ্রামার",
-                "বিজ্ঞানের ধারণা",
-                "MCQ সমাধান",
-                "পরীক্ষার টিপস"
-              ].map((suggestion, index) => (
-                <Button
-                  key={index}
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setInputMessage(suggestion)}
-                  className="text-xs bangla-text hover:bg-blue-50 dark:hover:bg-gray-800"
-                  disabled={isLoading}
-                >
-                  {suggestion}
-                </Button>
-              ))}
-            </div>
           </div>
         </div>
       </div>
