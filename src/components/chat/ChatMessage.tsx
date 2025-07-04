@@ -20,6 +20,41 @@ const ChatMessage = ({ message, onPdfOpen }: ChatMessageProps) => {
     }
   };
 
+  // Parse PDF links from message content
+  const parsePdfLinks = (content: string) => {
+    const linkRegex = /🔗 PDF লিংক: (https?:\/\/[^\s]+)/g;
+    const titleRegex = /• ([^(]+) \(/g;
+    const links: Array<{title: string, url: string}> = [];
+    
+    let match;
+    const urls: string[] = [];
+    const titles: string[] = [];
+    
+    while ((match = linkRegex.exec(content)) !== null) {
+      urls.push(match[1]);
+    }
+    
+    let titleMatch;
+    while ((titleMatch = titleRegex.exec(content)) !== null) {
+      titles.push(titleMatch[1].trim());
+    }
+    
+    for (let i = 0; i < Math.min(urls.length, titles.length); i++) {
+      links.push({ title: titles[i], url: urls[i] });
+    }
+    
+    return links;
+  };
+
+  // Clean content by removing raw PDF link lines
+  const cleanContent = (content: string) => {
+    const pdfLinkRegex = /🔗 PDF লিংক: https?:\/\/[^\s\n]+/g;
+    return content.replace(pdfLinkRegex, '').trim();
+  };
+
+  const pdfLinks = message.role === 'assistant' ? parsePdfLinks(message.content) : [];
+  const displayContent = message.role === 'assistant' ? cleanContent(message.content) : message.content;
+
   return (
     <div className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
       {message.role === 'assistant' && (
@@ -49,14 +84,14 @@ const ChatMessage = ({ message, onPdfOpen }: ChatMessageProps) => {
           <p className={`whitespace-pre-wrap bangla-text text-sm leading-relaxed ${
             message.role === 'user' ? 'text-white' : 'text-gray-800 dark:text-gray-200'
           }`}>
-            {message.content}
+            {displayContent}
           </p>
         </div>
 
         {/* PDF Action Buttons */}
-        {message.pdfLinks && message.pdfLinks.length > 0 && (
+        {pdfLinks.length > 0 && (
           <div className="mt-3 space-y-2">
-            {message.pdfLinks.map((pdfLink, index) => (
+            {pdfLinks.map((pdfLink, index) => (
               <Button
                 key={index}
                 variant="outline"

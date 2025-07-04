@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -120,32 +119,6 @@ const ChatInterface = () => {
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
-  // Parse PDF links from message content
-  const parsePdfLinks = (content: string) => {
-    const linkRegex = /🔗 PDF লিংক: (https?:\/\/[^\s]+)/g;
-    const titleRegex = /• ([^(]+) \(/g;
-    const links: Array<{title: string, url: string}> = [];
-    
-    let match;
-    const urls: string[] = [];
-    const titles: string[] = [];
-    
-    while ((match = linkRegex.exec(content)) !== null) {
-      urls.push(match[1]);
-    }
-    
-    let titleMatch;
-    while ((titleMatch = titleRegex.exec(content)) !== null) {
-      titles.push(titleMatch[1].trim());
-    }
-    
-    for (let i = 0; i < Math.min(urls.length, titles.length); i++) {
-      links.push({ title: titles[i], url: urls[i] });
-    }
-    
-    return links;
-  };
-
   const sendMessage = async () => {
     if ((!inputMessage.trim() && !uploadedFile) || isLoading) return;
 
@@ -217,20 +190,11 @@ const ChatInterface = () => {
         throw new Error('Empty response from AI');
       }
 
-      // Parse PDF links from the response
-      const pdfLinks = parsePdfLinks(data.reply);
-
-      // Clean the content by removing raw PDF link lines
-      let cleanedContent = data.reply;
-      const pdfLinkRegex = /🔗 PDF লিংক: https?:\/\/[^\s\n]+/g;
-      cleanedContent = cleanedContent.replace(pdfLinkRegex, '').trim();
-
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: cleanedContent,
+        content: data.reply,
         role: 'assistant',
-        timestamp: new Date(),
-        pdfLinks: pdfLinks.length > 0 ? pdfLinks : undefined
+        timestamp: new Date()
       };
 
       setMessages(prev => [...prev, assistantMessage]);
