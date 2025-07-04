@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Bot, User, Loader2 } from 'lucide-react';
+import { Send, Bot, User, Loader2, Paperclip, X } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -14,13 +13,17 @@ interface Message {
   content: string;
   role: 'user' | 'assistant';
   timestamp: Date;
+  hasFile?: boolean;
+  fileName?: string;
 }
 
 const ChatInterface = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   // Check if chatbot is enabled
@@ -48,14 +51,49 @@ const ChatInterface = () => {
   useEffect(() => {
     setMessages([{
       id: '1',
-      content: 'আসসালামু আলাইকুম! আমি আপনার শিক্ষা সহায়ক AI। আপনার যেকোনো পড়াশোনার প্রশ্ন করতে পারেন। আমি MCQ, বোর্ড প্রশ্ন, এবং পাঠ্যবই নিয়ে সাহায্য করতে পারি।',
+      content: 'আসসালামু আলাইকুম! আমি আপনার শিক্ষা সহায়ক AI। আপনার যেকোনো পড়াশোনার প্রশ্ন করতে পারেন। আমি MCQ, বোর্ড প্রশ্ন, এবং পাঠ্যবই নিয়ে সাহায্য করতে পারি। ফাইল আপলোড করেও প্রশ্ন করতে পারেন।',
       role: 'assistant',
       timestamp: new Date()
     }]);
   }, []);
 
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "ফাইল বেশি বড়",
+          description: "৫ MB এর কম ফাইল আপলোড করুন",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      // Check file type
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'application/pdf', 'text/plain'];
+      if (!allowedTypes.includes(file.type)) {
+        toast({
+          title: "ফাইল টাইপ সমর্থিত নয়",
+          description: "ছবি, PDF বা টেক্সট ফাইল আপলোড করুন",
+          variant: "destructive"
+        });
+        return;
+      }
+      
+      setUploadedFile(file);
+    }
+  };
+
+  const removeFile = () => {
+    setUploadedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
   const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
+    if ((!inputMessage.trim() && !uploadedFile) || isLoading) return;
 
     // Check if chatbot is enabled
     if (!chatbotSettings?.is_enabled) {
@@ -67,31 +105,66 @@ const ChatInterface = () => {
       return;
     }
 
+    const messageContent = uploadedFile ? 
+      `${inputMessage.trim() || 'ফাইল আপলোড করেছি'} [ফাইল: ${uploadedFile.name}]` : 
+      inputMessage.trim();
+
     const userMessage: Message = {
       id: Date.now().toString(),
-      content: inputMessage,
+      content: messageContent,
       role: 'user',
-      timestamp: new Date()
+      timestamp: new Date(),
+      hasFile: !!uploadedFile,
+      fileName: uploadedFile?.name
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
+    const currentFile = uploadedFile;
+    setUploadedFile(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
     setIsLoading(true);
 
     try {
+      let fileContent = '';
+      
+      // Process file if uploaded
+      if (currentFile) {
+        if (currentFile.type.startsWith('image/')) {
+          fileContent = `[ছবি আপলোড করা হয়েছে: ${currentFile.name}]`;
+        } else if (currentFile.type === 'application/pdf') {
+          fileContent = `[PDF ফাইল আপলোড করা হয়েছে: ${currentFile.name}]`;
+        } else if (currentFile.type === 'text/plain') {
+          const text = await currentFile.text();
+          fileContent = `[টেক্সট ফাইল: ${currentFile.name}]\n${text}`;
+        }
+      }
+
+      const finalMessage = fileContent ? 
+        `${inputMessage.trim()}\n\n${fileContent}` : 
+        inputMessage.trim();
+
       // Call Gemini edge function
       const { data, error } = await supabase.functions.invoke('chat-with-gemini', {
         body: {
-          message: inputMessage,
-          conversation: messages.slice(-5) // Send last 5 messages for context
+          message: finalMessage || 'ফাইল বিশ্লেষণ করুন'
         }
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Function invoke error:', error);
+        throw error;
+      }
+
+      if (!data || !data.reply) {
+        throw new Error('Empty response from AI');
+      }
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: data.reply || 'দুঃখিত, আমি এই মুহূর্তে উত্তর দিতে পারছি না।',
+        content: data.reply,
         role: 'assistant',
         timestamp: new Date()
       };
@@ -100,15 +173,24 @@ const ChatInterface = () => {
 
     } catch (error) {
       console.error('Chat error:', error);
+      
+      let errorMsg = 'দুঃখিত, একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।';
+      
+      if (error.message?.includes('Functions')) {
+        errorMsg = 'AI সেবায় সমস্যা। কিছুক্ষণ পর চেষ্টা করুন।';
+      } else if (error.message?.includes('network')) {
+        errorMsg = 'ইন্টারনেট সংযোগ সমস্যা। আবার চেষ্টা করুন।';
+      }
+
       toast({
         title: "চ্যাট এরর",
-        description: "চ্যাট সংযোগে সমস্যা হয়েছে। আবার চেষ্টা করুন।",
+        description: errorMsg,
         variant: "destructive"
       });
 
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: 'দুঃখিত, একটি সমস্যা হয়েছে। আবার চেষ্টা করুন।',
+        content: errorMsg,
         role: 'assistant',
         timestamp: new Date()
       };
@@ -173,7 +255,7 @@ const ChatInterface = () => {
               🤖 AI শিক্ষক
             </CardTitle>
             <p className="text-gray-600 dark:text-gray-300 bangla-text">
-              আপনার ব্যক্তিগত পড়াশোনার সহায়ক
+              আপনার ব্যক্তিগত পড়াশোনার সহায়ক - ফাইল আপলোড সহ
             </p>
           </CardHeader>
         </Card>
@@ -208,6 +290,11 @@ const ChatInterface = () => {
                       <p className="whitespace-pre-wrap bangla-text leading-relaxed">
                         {message.content}
                       </p>
+                      {message.hasFile && (
+                        <div className="mt-2 text-xs opacity-75">
+                          📎 {message.fileName}
+                        </div>
+                      )}
                     </div>
                     <p className="text-xs text-gray-500 mt-1 px-2">
                       {message.timestamp.toLocaleTimeString()}
@@ -239,18 +326,63 @@ const ChatInterface = () => {
         {/* Input Area */}
         <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
           <CardContent className="p-4">
+            {/* File Upload Preview */}
+            {uploadedFile && (
+              <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Paperclip className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm text-blue-800 dark:text-blue-200 bangla-text">
+                      {uploadedFile.name}
+                    </span>
+                    <span className="text-xs text-blue-600 dark:text-blue-400">
+                      ({(uploadedFile.size / 1024).toFixed(1)} KB)
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={removeFile}
+                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
+                  >
+                    <X className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            )}
+            
             <div className="flex gap-3">
-              <Input
-                value={inputMessage}
-                onChange={(e) => setInputMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="আপনার প্রশ্ন লিখুন..."
-                className="flex-1 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:ring-blue-500 bangla-text"
-                disabled={isLoading}
-              />
+              <div className="flex-1 relative">
+                <Input
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  placeholder="আপনার প্রশ্ন লিখুন বা ফাইল আপলোড করুন..."
+                  className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:ring-blue-500 bangla-text pr-12"
+                  disabled={isLoading}
+                />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*,.pdf,.txt"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  disabled={isLoading}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={isLoading}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 text-gray-500 hover:text-blue-600"
+                >
+                  <Paperclip className="w-4 h-4" />
+                </Button>
+              </div>
               <Button
                 onClick={sendMessage}
-                disabled={isLoading || !inputMessage.trim()}
+                disabled={isLoading || (!inputMessage.trim() && !uploadedFile)}
                 className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg"
               >
                 {isLoading ? (

@@ -47,10 +47,10 @@ serve(async (req) => {
 
     // Fetch comprehensive context from database with NCTB content prioritized
     const [mcqResult, boardResult, nctbResult, notesResult] = await Promise.all([
-      supabase.from('mcq_questions').select('*').limit(100),
-      supabase.from('board_questions').select('*').limit(30),
-      supabase.from('nctb_books').select('*').order('created_at', { ascending: false }),
-      supabase.from('notes').select('*').limit(20)
+      supabase.from('mcq_questions').select('*').limit(50),
+      supabase.from('board_questions').select('*').limit(20),
+      supabase.from('nctb_books').select('*').order('created_at', { ascending: false }).limit(10),
+      supabase.from('notes').select('*').limit(15)
     ]);
 
     console.log('Database context fetched:', {
@@ -68,6 +68,7 @@ serve(async (req) => {
 - অধ্যায়ভিত্তিক প্রশ্ন ট্রেন্ড বিশ্লেষণ 
 - বোর্ড পরীক্ষার প্রশ্ন প্যাটার্ন অনুযায়ী গাইড করা
 - পাঠ্যবই থেকে গুরুত্বপূর্ণ পয়েন্ট চিহ্নিত করা
+- ফাইল বিশ্লেষণ এবং ব্যাখ্যা
 
 📚 NCTB বই কন্টেন্ট বিশ্লেষণ (${nctbResult.data?.length || 0}টি বই):`;
 
@@ -79,8 +80,8 @@ serve(async (req) => {
         
         // Include significant portions of text content for better analysis
         if (book.content && book.content.length > 0) {
-          const contentPreview = book.content.length > 2000 
-            ? book.content.substring(0, 2000) + "..."
+          const contentPreview = book.content.length > 1500 
+            ? book.content.substring(0, 1500) + "..."
             : book.content;
           context += `\n📝 বই এর কন্টেন্ট: ${contentPreview}`;
         }
@@ -104,8 +105,8 @@ serve(async (req) => {
 
       Object.entries(subjectGroups).forEach(([subject, questions]) => {
         context += `\n\n📊 ${subject} (${questions.length}টি প্রশ্ন):`;
-        questions.slice(0, 3).forEach(mcq => {
-          context += `\n- ${mcq.question?.substring(0, 120)}... [${mcq.board || 'সাধারণ'} বোর্ড ${mcq.year || 'N/A'}]`;
+        questions.slice(0, 2).forEach(mcq => {
+          context += `\n- ${mcq.question?.substring(0, 100)}... [${mcq.board || 'সাধারণ'} বোর্ড ${mcq.year || 'N/A'}]`;
         });
       });
     }
@@ -121,10 +122,10 @@ serve(async (req) => {
 
       Object.entries(yearGroups)
         .sort(([a], [b]) => parseInt(b) - parseInt(a))
-        .slice(0, 3)
+        .slice(0, 2)
         .forEach(([year, questions]) => {
           context += `\n\n🗓️ ${year} সালের প্রশ্ন (${questions.length}টি):`;
-          questions.slice(0, 2).forEach(q => {
+          questions.slice(0, 1).forEach(q => {
             context += `\n- ${q.subject} (${q.board} বোর্ড): ${q.title}`;
           });
         });
@@ -132,7 +133,7 @@ serve(async (req) => {
 
     context += `\n\n📝 অতিরিক্ত নোট (${notesResult.data?.length || 0}টি):`;
     if (notesResult.data && notesResult.data.length > 0) {
-      context += `\n${notesResult.data.slice(0, 3).map(note => 
+      context += `\n${notesResult.data.slice(0, 2).map(note => 
         `- ${note.subject}: ${note.title}`
       ).join('\n')}`;
     }
@@ -154,10 +155,11 @@ serve(async (req) => {
 8. 🌟 শিক্ষার্থীদের উৎসাহিত করুন
 9. 📊 প্রশ্ন প্যাটার্ন ও ট্রেন্ড বিশ্লেষণ করুন
 10. 🤝 বন্ধুত্বপূর্ণ কিন্তু সম্মানজনক ভাষা ব্যবহার করুন
+11. 📎 ফাইল আপলোড থাকলে সেটি বিশ্লেষণ করে উত্তর দিন
 
 আপনার শিক্ষার্থীর প্রশ্ন: ${message}`;
 
-    console.log('Calling Gemini API with enhanced NCTB context...');
+    console.log('Calling Gemini API with enhanced context...');
 
     // Call Gemini API with enhanced settings for educational content analysis
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
@@ -172,9 +174,9 @@ serve(async (req) => {
           }]
         }],
         generationConfig: {
-          temperature: 0.7,
+          temperature: 0.8,
           topP: 0.9,
-          maxOutputTokens: 2048,
+          maxOutputTokens: 1024,
         }
       }),
     });
@@ -203,7 +205,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log('Gemini API response received for NCTB analysis');
+    console.log('Gemini API response received successfully');
     
     if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
       console.error('Invalid Gemini API response structure:', data);
@@ -228,7 +230,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('Successfully generated NCTB-enhanced educational reply');
+    console.log('Successfully generated educational reply');
 
     return new Response(JSON.stringify({ reply: reply.trim() }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
