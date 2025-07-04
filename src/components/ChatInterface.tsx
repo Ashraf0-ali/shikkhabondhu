@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Bot, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -20,11 +21,9 @@ const ChatInterface = () => {
   const inputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
-  // Custom hooks
   const { messages, setMessages, clearChatHistory } = useChatMessages();
   const isKeyboardVisible = useKeyboardVisibility();
 
-  // Check if chatbot is enabled
   const { data: chatbotSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ['chatbot_settings'],
     queryFn: async () => {
@@ -38,8 +37,6 @@ const ChatInterface = () => {
     }
   });
 
-
-  // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -63,7 +60,6 @@ const ChatInterface = () => {
   const sendMessage = async () => {
     if ((!inputMessage.trim() && !uploadedFile) || isLoading) return;
 
-    // Check if chatbot is enabled
     if (!chatbotSettings?.is_enabled) {
       toast({
         title: "চ্যাটবট বন্ধ",
@@ -97,15 +93,12 @@ const ChatInterface = () => {
     setIsLoading(true);
 
     try {
-      // Process file if uploaded
       const fileContent = currentFile ? await processFileContent(currentFile) : '';
       const finalMessage = fileContent ? 
         `${inputMessage.trim()}\n\n${fileContent}` : 
         inputMessage.trim();
 
-      // Prepare chat history and send message
-      const chatHistory = prepareChatHistory(messages);
-      const data = await sendChatMessage(finalMessage, chatHistory);
+      const data = await sendChatMessage(finalMessage, []);
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -117,7 +110,7 @@ const ChatInterface = () => {
       setMessages(prev => [...prev, assistantMessage]);
 
     } catch (error) {
-      console.error('Chat error:', error);
+      console.error('Send message error:', error);
       
       const errorMsg = getErrorMessage(error);
 
@@ -129,7 +122,7 @@ const ChatInterface = () => {
 
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: errorMsg,
+        content: `দুঃখিত, ${errorMsg}`,
         role: 'assistant',
         timestamp: new Date()
       };
@@ -147,7 +140,6 @@ const ChatInterface = () => {
     }
   };
 
-  // Show loading while checking settings
   if (isLoadingSettings) {
     return (
       <div className="flex items-center justify-center h-screen">
