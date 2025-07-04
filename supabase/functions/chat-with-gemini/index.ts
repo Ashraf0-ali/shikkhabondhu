@@ -1,3 +1,4 @@
+
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { corsHeaders, handleError } from './errorHandlers.ts';
@@ -5,6 +6,7 @@ import { createSupabaseClient, fetchBooks, fetchEducationalData } from './databa
 import { buildBaseContext, buildBookContext, buildMCQContext, buildFinalInstructions } from './contextBuilders.ts';
 import { callGeminiAPI } from './geminiApi.ts';
 import { detectBookRequest, detectMCQRequest, validateRequest, validateApiKey } from './utils.ts';
+import { checkRateLimit } from './rateLimiter.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -27,6 +29,21 @@ serve(async (req) => {
     }
 
     const { message, chatHistory } = await req.json();
+    
+    // Get user ID from auth header (if available)
+    const authHeader = req.headers.get('Authorization');
+    const userId = authHeader ? authHeader.split(' ')[1] : 'anonymous';
+
+    // Check rate limit
+    const rateLimitCheck = checkRateLimit(userId);
+    if (!rateLimitCheck.allowed) {
+      return new Response(JSON.stringify({ 
+        error: rateLimitCheck.message 
+      }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
 
     // Validate request
     const requestError = validateRequest(message);
@@ -44,6 +61,7 @@ serve(async (req) => {
 
     console.log('Fetching context from database...');
     console.log('Chat history length:', chatHistory?.length || 0);
+    console.log('User ID:', userId);
 
     // Build base context
     let context = buildBaseContext(chatHistory);
@@ -80,7 +98,7 @@ serve(async (req) => {
     // Add final instructions
     context += buildFinalInstructions(message, foundBooks);
 
-    // Call Gemini API
+    // Call Gemini API with retry mechanism
     const reply = await callGeminiAPI(context, geminiApiKey!);
 
     return new Response(JSON.stringify({ reply }), {
