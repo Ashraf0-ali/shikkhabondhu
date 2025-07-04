@@ -6,15 +6,74 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, FileText, BookOpen, Book, FileTextIcon, Loader2, ExternalLink, Download } from 'lucide-react';
+import { Search, FileText, BookOpen, Book, FileTextIcon, Loader2, ExternalLink, Download, Filter, X } from 'lucide-react';
+import { useSearchParams } from 'react-router-dom';
 
 const SearchInterface = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [classFilter, setClassFilter] = useState<number | null>(null);
+
+  // URL থেকে class filter পড়া
+  useEffect(() => {
+    const classParam = searchParams.get('class');
+    const typeParam = searchParams.get('type');
+    
+    if (classParam) {
+      const classLevel = parseInt(classParam);
+      setClassFilter(classLevel);
+      
+      // যদি type=books হয় তাহলে শুধু NCTB বই দেখাবো
+      if (typeParam === 'books') {
+        performNCTBSearch('', classLevel);
+      }
+    }
+  }, [searchParams]);
+
+  const performNCTBSearch = async (query: string, classLevel?: number) => {
+    setIsSearching(true);
+    try {
+      let nctbQuery = supabase
+        .from('nctb_books')
+        .select('*');
+
+      // Class filter প্রয়োগ করা
+      if (classLevel) {
+        nctbQuery = nctbQuery.eq('class_level', classLevel);
+      }
+
+      // Search query প্রয়োগ করা
+      if (query && query.length >= 2) {
+        const searchTerm = query.toLowerCase();
+        nctbQuery = nctbQuery.or(`title.ilike.%${searchTerm}%,subject.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
+      }
+
+      const { data: nctbResults } = await nctbQuery.limit(50);
+
+      const results = (nctbResults || []).map(item => ({ 
+        ...item, 
+        type: 'nctb', 
+        icon: Book 
+      }));
+
+      setSearchResults(results);
+    } catch (error) {
+      console.error('NCTB Search error:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
 
   const performSearch = async (query: string) => {
     if (!query || query.length < 2) {
+      // যদি class filter থাকে তাহলে সেই class এর সব বই দেখাবো
+      if (classFilter) {
+        performNCTBSearch('', classFilter);
+        return;
+      }
       setSearchResults([]);
       return;
     }
@@ -38,11 +97,17 @@ const SearchInterface = () => {
         .limit(20);
 
       // Search NCTB books
-      const { data: nctbResults } = await supabase
+      let nctbQuery = supabase
         .from('nctb_books')
         .select('*')
-        .or(`title.ilike.%${searchTerm}%,subject.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`)
-        .limit(20);
+        .or(`title.ilike.%${searchTerm}%,subject.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
+
+      // Class filter প্রয়োগ করা
+      if (classFilter) {
+        nctbQuery = nctbQuery.eq('class_level', classFilter);
+      }
+
+      const { data: nctbResults } = await nctbQuery.limit(20);
 
       // Search Notes
       const { data: notesResults } = await supabase
@@ -74,7 +139,25 @@ const SearchInterface = () => {
     }, 300);
 
     return () => clearTimeout(delayedSearch);
-  }, [searchQuery]);
+  }, [searchQuery, classFilter]);
+
+  // Class filter clear করা
+  const clearClassFilter = () => {
+    setClassFilter(null);
+    setSearchParams({});
+    setSearchResults([]);
+  };
+
+  // Class level এর বাংলা নাম
+  const getClassLevelName = (level: number) => {
+    switch (level) {
+      case 6: return '৬ষ্ঠ শ্রেণী';
+      case 7: return '৭ম শ্রেণী';
+      case 8: return '৮ম শ্রেণী';
+      case 9: return '৯ম-১০ম শ্রেণী';
+      default: return `${level} শ্রেণী`;
+    }
+  };
 
   const getTypeLabel = (type: string) => {
     switch (type) {
@@ -105,6 +188,13 @@ const SearchInterface = () => {
     }
   };
 
+  // Initial load - যদি class filter থাকে তাহলে সেই class এর বই দেখাবো
+  useEffect(() => {
+    if (classFilter && !searchQuery) {
+      performNCTBSearch('', classFilter);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4 pb-20">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -120,6 +210,29 @@ const SearchInterface = () => {
           </CardHeader>
         </Card>
 
+        {/* Active Filters */}
+        {classFilter && (
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <span className="text-sm text-gray-600 bangla-text">সক্রিয় ফিল্টার:</span>
+                <Badge className="bg-blue-100 text-blue-800 bangla-text">
+                  {getClassLevelName(classFilter)}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-4 w-4 p-0 ml-1 hover:bg-transparent"
+                    onClick={clearClassFilter}
+                  >
+                    <X className="w-3 h-3" />
+                  </Button>
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Search Bar */}
         <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
           <CardContent className="p-6">
@@ -127,7 +240,10 @@ const SearchInterface = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <Input
                 type="text"
-                placeholder="MCQ, বোর্ড প্রশ্ন, NCTB বই, নোটস - যেকোনো কিছু খুঁজুন..."
+                placeholder={classFilter ? 
+                  `${getClassLevelName(classFilter)} এর বই অনুসন্ধান করুন...` : 
+                  "MCQ, বোর্ড প্রশ্ন, NCTB বই, নোটস - যেকোনো কিছু খুঁজুন..."
+                }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10 pr-4 py-3 text-lg bangla-text border-2 focus:border-blue-500"
@@ -140,17 +256,22 @@ const SearchInterface = () => {
         </Card>
 
         {/* Search Results */}
-        {searchQuery && (
+        {(searchQuery || classFilter) && (
           <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
             <CardHeader>
               <CardTitle className="bangla-text">
-                📊 সার্চ ফলাফল ({searchResults.length})
+                📊 {classFilter ? `${getClassLevelName(classFilter)} এর বই` : 'সার্চ ফলাফল'} ({searchResults.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
               {searchResults.length === 0 && !isSearching ? (
                 <div className="text-center py-8">
-                  <p className="text-gray-500 bangla-text">কোনো ফলাফল পাওয়া যায়নি</p>
+                  <p className="text-gray-500 bangla-text">
+                    {classFilter ? 
+                      `${getClassLevelName(classFilter)} এর কোনো বই পাওয়া যায়নি` : 
+                      'কোনো ফলাফল পাওয়া যায়নি'
+                    }
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
