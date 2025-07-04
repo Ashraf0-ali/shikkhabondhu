@@ -316,7 +316,7 @@ const ChatInterface = () => {
   return (
     <div className="flex flex-col h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3">
+      <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3 relative z-40">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
@@ -331,7 +331,7 @@ const ChatInterface = () => {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="pr-12">
             <Button
               variant="outline"
               size="sm"
@@ -345,7 +345,7 @@ const ChatInterface = () => {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-hidden pb-24">
+      <div className="flex-1 overflow-hidden" style={{ paddingBottom: '100px' }}>
         <ScrollArea className="h-full px-4 py-4">
           <div className="max-w-3xl mx-auto space-y-4">
             {messages.map((message) => (
@@ -417,8 +417,8 @@ const ChatInterface = () => {
         </ScrollArea>
       </div>
 
-      {/* Input Area - Fixed at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 z-50">
+      {/* Input Area - Fixed at bottom with higher z-index */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 p-4 z-[100]">
         <div className="max-w-3xl mx-auto">
           {/* File Upload Preview */}
           {uploadedFile && (
@@ -448,7 +448,7 @@ const ChatInterface = () => {
           )}
           
           {/* Input Row */}
-          <div className="flex gap-3">
+          <div className="flex gap-3 items-center">
             <div className="flex-1 relative">
               <Input
                 ref={inputRef}
@@ -481,7 +481,7 @@ const ChatInterface = () => {
             <Button
               onClick={sendMessage}
               disabled={isLoading || (!inputMessage.trim() && !uploadedFile)}
-              className="bg-blue-500 hover:bg-blue-600 text-white w-11 h-11 p-0 rounded-full"
+              className="bg-blue-500 hover:bg-blue-600 text-white w-11 h-11 p-0 rounded-full flex-shrink-0"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
