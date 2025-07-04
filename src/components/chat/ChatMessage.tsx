@@ -56,17 +56,17 @@ const ChatMessage = ({ message, onPdfOpen }: ChatMessageProps) => {
   const displayContent = message.role === 'assistant' ? cleanContent(message.content) : message.content;
 
   return (
-    <div className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+    <div className={`flex gap-3 mb-4 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
       {message.role === 'assistant' && (
-        <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
           <Bot className="w-4 h-4 text-white" />
         </div>
       )}
       
-      <div className={`max-w-[80%] ${message.role === 'user' ? 'order-1' : ''}`}>
+      <div className={`max-w-[85%] ${message.role === 'user' ? 'order-1' : ''}`}>
         {/* File attachment display */}
         {message.hasFile && (
-          <div className="mb-2 p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+          <div className="mb-2 p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
             <div className="flex items-center gap-2">
               {getFileIcon(message.fileType || '')}
               <span className="text-sm text-blue-800 dark:text-blue-200 bangla-text">
@@ -76,12 +76,13 @@ const ChatMessage = ({ message, onPdfOpen }: ChatMessageProps) => {
           </div>
         )}
         
-        <div className={`p-3 rounded-2xl ${
+        {/* Message content - ChatGPT style without heavy border/background */}
+        <div className={`${
           message.role === 'user' 
-            ? 'bg-blue-500 text-white' 
-            : 'bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700'
+            ? 'bg-blue-500 text-white px-4 py-3 rounded-2xl ml-8' 
+            : 'text-gray-800 dark:text-gray-200 py-2'
         }`}>
-          <p className={`whitespace-pre-wrap bangla-text text-sm leading-relaxed ${
+          <p className={`whitespace-pre-wrap bangla-text text-[15px] leading-relaxed ${
             message.role === 'user' ? 'text-white' : 'text-gray-800 dark:text-gray-200'
           }`}>
             {displayContent}
@@ -106,7 +107,7 @@ const ChatMessage = ({ message, onPdfOpen }: ChatMessageProps) => {
           </div>
         )}
         
-        <div className={`text-xs text-gray-500 mt-1 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
+        <div className={`text-xs text-gray-400 mt-2 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
           {message.timestamp.toLocaleTimeString('bn-BD', { 
             hour: '2-digit', 
             minute: '2-digit' 
@@ -115,7 +116,7 @@ const ChatMessage = ({ message, onPdfOpen }: ChatMessageProps) => {
       </div>
 
       {message.role === 'user' && (
-        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center flex-shrink-0 mt-1">
           <User className="w-4 h-4 text-white" />
         </div>
       )}

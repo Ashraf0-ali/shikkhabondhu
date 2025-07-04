@@ -1,4 +1,3 @@
-
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.50.2';
@@ -27,7 +26,7 @@ serve(async (req) => {
       });
     }
 
-    const { message } = await req.json();
+    const { message, chatHistory } = await req.json();
 
     if (!message || typeof message !== 'string') {
       return new Response(JSON.stringify({ 
@@ -44,6 +43,7 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     console.log('Fetching context from database...');
+    console.log('Chat history length:', chatHistory?.length || 0);
 
     // Check if user is asking for specific books
     const bookRequest = message.toLowerCase().includes('বই') || 
@@ -57,6 +57,7 @@ serve(async (req) => {
     let context = `আপনি একজন অভিজ্ঞত বাংলাদেশি শিক্ষক এবং AI সহায়ক। 
 
 🎯 গুরুত্বপূর্ণ নির্দেশনা:
+- আগের কথোপকথন মনে রাখুন এবং সেই অনুযায়ী উত্তর দিন
 - শিক্ষার্থী যা জিজ্ঞেস করবে, ঠিক সেটারই উত্তর দিন
 - বই চাইলে প্রথমে দেখুন আপনার কাছে আছে কিনা
 - যদি বই থাকে তাহলে বলুন "হ্যাঁ, আমার কাছে আছে" এবং তারপর বিস্তারিত দিন
@@ -65,6 +66,18 @@ serve(async (req) => {
 - ব্যাখ্যা সহজ ও সংক্ষিপ্ত রাখুন
 - PDF লিংক দেওয়ার সময় এই ফরম্যাট ব্যবহার করুন: "🔗 PDF লিংক: [URL]"
 - বই থাকলে অবশ্যই PDF লিংক দিন`;
+
+    // Add chat history context
+    if (chatHistory && chatHistory.length > 0) {
+      context += `\n\n📜 পূর্বের কথোপকথন:`;
+      // Only include last 10 messages to avoid token limits
+      const recentHistory = chatHistory.slice(-10);
+      recentHistory.forEach((msg: any, index: number) => {
+        const role = msg.role === 'user' ? 'শিক্ষার্থী' : 'AI শিক্ষক';
+        context += `\n${role}: ${msg.content}`;
+      });
+      context += `\n\n⚠️ উপরের কথোপকথনের প্রেক্ষিতে নিচের নতুন প্রশ্নের উত্তর দিন।`;
+    }
 
     if (bookRequest) {
       console.log('Book request detected, searching database...');
@@ -154,10 +167,18 @@ serve(async (req) => {
 5. অপ্রাসঙ্গিক তথ্য দেবেন না
 6. PDF লিংক দেওয়ার সময় "🔗 PDF লিংক: [URL]" ফরম্যাট ব্যবহার করুন
 7. বই থাকলে অবশ্যই PDF লিংক দিবেন
+8. পূর্বের কথোপকথনের উপর ভিত্তি করে উত্তর দিন
 
-শিক্ষার্থীর প্রশ্ন: ${message}`;
+শিক্ষার্থীর নতুন প্রশ্ন: ${message}`;
 
-    console.log('Calling Gemini API with enhanced book search context...');
+    console.log('Calling Gemini API with context and chat history...');
+
+    // Prepare messages for Gemini
+    const messages = [
+      {
+        parts: [{ text: context }]
+      }
+    ];
 
     // Call Gemini API
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
@@ -166,11 +187,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: context
-          }]
-        }],
+        contents: messages,
         generationConfig: {
           temperature: 0.7,
           topP: 0.8,
@@ -228,7 +245,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('Successfully generated enhanced educational reply with book search');
+    console.log('Successfully generated contextual reply with chat history');
 
     return new Response(JSON.stringify({ reply: reply.trim() }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

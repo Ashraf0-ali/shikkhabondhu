@@ -174,10 +174,16 @@ const ChatInterface = () => {
         `${inputMessage.trim()}\n\n${fileContent}` : 
         inputMessage.trim();
 
-      // Call Gemini edge function
+      // Prepare chat history - exclude system messages and limit to recent messages
+      const chatHistory = messages
+        .filter(msg => msg.content !== 'আসসালামু আলাইকুম! আমি আপনার শিক্ষা সহায়ক AI। আপনার যেকোনো পড়াশোনার প্রশ্ন করতে পারেন। আমি MCQ, বোর্ড প্রশ্ন, এবং পাঠ্যবই নিয়ে সাহায্য করতে পারি। ফাইল আপলোড করেও প্রশ্ন করতে পারেন।')
+        .slice(-8); // Last 8 messages for context
+
+      // Call Gemini edge function with chat history
       const { data, error } = await supabase.functions.invoke('chat-with-gemini', {
         body: {
-          message: finalMessage || 'ফাইল বিশ্লেষণ করুন'
+          message: finalMessage || 'ফাইল বিশ্লেষণ করুন',
+          chatHistory: chatHistory
         }
       });
 
@@ -271,7 +277,7 @@ const ChatInterface = () => {
       {/* Messages Area */}
       <div className="flex-1 overflow-hidden" style={{ paddingBottom: '100px' }}>
         <ScrollArea className="h-full px-4 py-4">
-          <div className="max-w-3xl mx-auto space-y-4">
+          <div className="max-w-4xl mx-auto space-y-2">
             {messages.map((message) => (
               <ChatMessage 
                 key={message.id} 
@@ -282,11 +288,11 @@ const ChatInterface = () => {
 
             {/* Loading indicator */}
             {isLoading && (
-              <div className="flex gap-3 justify-start">
-                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+              <div className="flex gap-3 justify-start mb-4">
+                <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0 mt-1">
                   <Bot className="w-4 h-4 text-white" />
                 </div>
-                <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 rounded-2xl">
+                <div className="py-2">
                   <div className="flex items-center gap-2">
                     <Loader2 className="w-4 h-4 animate-spin text-green-500" />
                     <span className="text-gray-500 bangla-text text-sm">টাইপ করছি...</span>
