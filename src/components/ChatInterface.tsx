@@ -271,22 +271,22 @@ const ChatInterface = () => {
         </div>
       </div>
 
-      {/* Messages Area - Scrollable */}
-      <div className="flex-1 overflow-hidden">
+      {/* Messages Area - Scrollable with proper spacing for bottom navigation */}
+      <div className="flex-1 overflow-hidden" style={{ paddingBottom: '80px' }}>
         <ScrollArea className="h-full px-4 py-4">
           <div className="max-w-4xl mx-auto space-y-6">
             {messages.map((message) => (
               <div key={message.id} className="flex gap-4">
                 {/* Avatar */}
                 <div className="flex-shrink-0">
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                     message.role === 'user' 
                       ? 'bg-blue-500' 
                       : 'bg-green-500'
                   }`}>
                     {message.role === 'user' ? 
-                      <User className="w-4 h-4 text-white" /> : 
-                      <Bot className="w-4 h-4 text-white" />
+                      <User className="w-5 h-5 text-white" /> : 
+                      <Bot className="w-5 h-5 text-white" />
                     }
                   </div>
                 </div>
@@ -314,8 +314,8 @@ const ChatInterface = () => {
                     </div>
                   )}
                   
-                  <div className="prose prose-sm max-w-none dark:prose-invert">
-                    <p className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 bangla-text leading-relaxed">
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-2xl p-4 max-w-none">
+                    <p className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 bangla-text leading-relaxed text-base">
                       {message.content}
                     </p>
                   </div>
@@ -327,8 +327,8 @@ const ChatInterface = () => {
             {isLoading && (
               <div className="flex gap-4">
                 <div className="flex-shrink-0">
-                  <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
-                    <Bot className="w-4 h-4 text-white" />
+                  <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center">
+                    <Bot className="w-5 h-5 text-white" />
                   </div>
                 </div>
                 <div className="flex-1">
@@ -337,7 +337,7 @@ const ChatInterface = () => {
                       AI শিক্ষক
                     </span>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-4">
                     <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
                     <span className="text-gray-500 bangla-text">চিন্তা করছি...</span>
                   </div>
@@ -350,8 +350,8 @@ const ChatInterface = () => {
         </ScrollArea>
       </div>
 
-      {/* Input Area - Fixed */}
-      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+      {/* Input Area - Fixed at bottom with proper spacing */}
+      <div className="fixed bottom-16 left-0 right-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4 z-10">
         <div className="max-w-4xl mx-auto">
           {/* File Upload Preview */}
           {uploadedFile && (
@@ -388,7 +388,7 @@ const ChatInterface = () => {
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder="আপনার প্রশ্ন লিখুন..."
-                className="pr-12 bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 bangla-text"
+                className="pr-12 bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 bangla-text h-12 text-base"
                 disabled={isLoading}
               />
               <input
@@ -413,12 +413,12 @@ const ChatInterface = () => {
             <Button
               onClick={sendMessage}
               disabled={isLoading || (!inputMessage.trim() && !uploadedFile)}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2"
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 h-12"
             >
               {isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
+                <Loader2 className="w-5 h-5 animate-spin" />
               ) : (
-                <Send className="w-4 h-4" />
+                <Send className="w-5 h-5" />
               )}
             </Button>
           </div>

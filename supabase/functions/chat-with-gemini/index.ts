@@ -45,7 +45,7 @@ serve(async (req) => {
 
     console.log('Fetching context from database...');
 
-    // Fetch comprehensive context from database with NCTB content prioritized
+    // Fetch comprehensive context from database
     const [mcqResult, boardResult, nctbResult, notesResult] = await Promise.all([
       supabase.from('mcq_questions').select('*').limit(50),
       supabase.from('board_questions').select('*').limit(20),
@@ -60,112 +60,70 @@ serve(async (req) => {
       notes: notesResult.data?.length || 0
     });
 
-    // Build enhanced teacher-friendly context with NCTB book content analysis
-    let context = `আপনি একজন অভিজ্ঞ বাংলাদেশি শিক্ষক এবং AI সহায়ক। আপনার কাজ হলো ছাত্রছাত্রীদের পড়াশোনায় শিক্ষকের মতো করে সাহায্য করা।
+    // Enhanced context with focus on direct answers
+    let context = `আপনি একজন অভিজ্ঞ বাংলাদেশি শিক্ষক এবং AI সহায়ক। আপনার কাজ হলো ছাত্রছাত্রীদের প্রশ্নের সরাসরি ও স্পষ্ট উত্তর দেওয়া।
 
-🎓 আপনার বিশেষ দক্ষতা:
-- NCTB বই বিশ্লেষণ করে প্রশ্ন প্যাটার্ন খুঁজে বের করা
-- অধ্যায়ভিত্তিক প্রশ্ন ট্রেন্ড বিশ্লেষণ 
-- বোর্ড পরীক্ষার প্রশ্ন প্যাটার্ন অনুযায়ী গাইড করা
-- পাঠ্যবই থেকে গুরুত্বপূর্ণ পয়েন্ট চিহ্নিত করা
-- ফাইল বিশ্লেষণ এবং ব্যাখ্যা
-- NCTB বইয়ের PDF লিংক প্রদান
+🎯 গুরুত্বপূর্ণ নির্দেশনা:
+- শিক্ষার্থী যা জিজ্ঞেস করবে, ঠিক সেটারই উত্তর দিন
+- অপ্রয়োজনীয় লিংক বা অতিরিক্ত তথ্য দেবেন না
+- MCQ চাইলে সরাসরি MCQ দিন
+- সমাধান চাইলে সরাসরি সমাধান দিন
+- ব্যাখ্যা সহজ ও সংক্ষিপ্ত রাখুন
 
-📚 NCTB বই কন্টেন্ট বিশ্লেষণ (${nctbResult.data?.length || 0}টি বই):`;
+🎓 আপনার বিশেষত্ব:
+- MCQ প্রশ্ন ও উত্তর বিশ্লেষণ
+- বোর্ড প্রশ্ন প্যাটার্ন
+- NCTB বই কন্টেন্ট
+- পাঠ্যবই সমাধান
 
-    // Add detailed NCTB content for AI analysis
-    if (nctbResult.data && nctbResult.data.length > 0) {
-      nctbResult.data.forEach(book => {
-        context += `\n\n📖 ${book.title} (${book.class_level} শ্রেণী - ${book.subject})`;
-        if (book.chapter) context += ` - অধ্যায়: ${book.chapter}`;
-        
-        // Include PDF link information
-        if (book.file_url) {
-          context += `\n🔗 PDF লিংক: ${book.file_url}`;
-        }
-        
-        // Include significant portions of text content for better analysis
-        if (book.content && book.content.length > 0) {
-          const contentPreview = book.content.length > 1500 
-            ? book.content.substring(0, 1500) + "..."
-            : book.content;
-          context += `\n📝 বই এর কন্টেন্ট: ${contentPreview}`;
-        }
-      });
-    }
+📚 উপলব্ধ ডেটা:
+- MCQ প্রশ্ন: ${mcqResult.data?.length || 0}টি
+- বোর্ড প্রশ্ন: ${boardResult.data?.length || 0}টি  
+- NCTB বই: ${nctbResult.data?.length || 0}টি
+- নোট: ${notesResult.data?.length || 0}টি`;
 
-    context += `\n\n🎯 MCQ প্রশ্ন প্যাটার্ন বিশ্লেষণ (${mcqResult.data?.length || 0}টি প্রশ্ন):`;
-    
-    if (mcqResult.data && mcqResult.data.length > 0) {
-      // Group MCQs by subject and chapter for pattern analysis
-      const subjectGroups: Record<string, any[]> = {};
-      mcqResult.data.forEach(mcq => {
-        const key = `${mcq.subject}${mcq.chapter ? ` - ${mcq.chapter}` : ''}`;
-        if (!subjectGroups[key]) subjectGroups[key] = [];
-        subjectGroups[key].push(mcq);
-      });
-
-      Object.entries(subjectGroups).forEach(([subject, questions]) => {
-        context += `\n\n📊 ${subject} (${questions.length}টি প্রশ্ন):`;
-        questions.slice(0, 2).forEach(mcq => {
-          context += `\n- ${mcq.question?.substring(0, 100)}... [${mcq.board || 'সাধারণ'} বোর্ড ${mcq.year || 'N/A'}]`;
+    // Add MCQ examples if user asks about MCQ
+    if (message.toLowerCase().includes('mcq') || message.toLowerCase().includes('এমসিকিউ')) {
+      if (mcqResult.data && mcqResult.data.length > 0) {
+        context += `\n\n📊 MCQ উদাহরণ:`;
+        mcqResult.data.slice(0, 5).forEach((mcq, index) => {
+          context += `\n\n${index + 1}. ${mcq.question}`;
+          if (mcq.option_a) context += `\na) ${mcq.option_a}`;
+          if (mcq.option_b) context += `\nb) ${mcq.option_b}`;
+          if (mcq.option_c) context += `\nc) ${mcq.option_c}`;
+          if (mcq.option_d) context += `\nd) ${mcq.option_d}`;
+          context += `\n✅ সঠিক উত্তর: ${mcq.correct_answer}`;
+          if (mcq.subject) context += ` [${mcq.subject}]`;
         });
-      });
+      }
     }
 
-    context += `\n\n📋 বোর্ড প্রশ্ন ট্রেন্ড (${boardResult.data?.length || 0}টি প্রশ্ন):`;
-    if (boardResult.data && boardResult.data.length > 0) {
-      const yearGroups: Record<string, any[]> = {};
-      boardResult.data.forEach(q => {
-        const key = `${q.year}`;
-        if (!yearGroups[key]) yearGroups[key] = [];
-        yearGroups[key].push(q);
-      });
-
-      Object.entries(yearGroups)
-        .sort(([a], [b]) => parseInt(b) - parseInt(a))
-        .slice(0, 2)
-        .forEach(([year, questions]) => {
-          context += `\n\n🗓️ ${year} সালের প্রশ্ন (${questions.length}টি):`;
-          questions.slice(0, 1).forEach(q => {
-            context += `\n- ${q.subject} (${q.board} বোর্ড): ${q.title}`;
-          });
+    // Add NCTB content if user asks about books
+    if (message.toLowerCase().includes('বই') || message.toLowerCase().includes('nctb') || message.toLowerCase().includes('পিডিএফ')) {
+      if (nctbResult.data && nctbResult.data.length > 0) {
+        context += `\n\n📖 NCTB বই তথ্য:`;
+        nctbResult.data.forEach(book => {
+          context += `\n• ${book.title} (${book.class_level} শ্রেণী - ${book.subject})`;
+          if (book.file_url) {
+            context += `\n  🔗 লিংক: ${book.file_url}`;
+          }
         });
+      }
     }
 
-    context += `\n\n📝 অতিরিক্ত নোট (${notesResult.data?.length || 0}টি):`;
-    if (notesResult.data && notesResult.data.length > 0) {
-      context += `\n${notesResult.data.slice(0, 2).map(note => 
-        `- ${note.subject}: ${note.title}`
-      ).join('\n')}`;
-    }
+    context += `\n\n📝 উত্তর দেওয়ার নিয়ম:
+1. সরাসরি প্রশ্নের উত্তর দিন
+2. সহজ বাংলায় ব্যাখ্যা করুন  
+3. প্রয়োজনে উদাহরণ দিন
+4. MCQ চাইলে অপশন সহ দিন
+5. অপ্রাসঙ্গিক তথ্য দেবেন না
+6. লিংক শুধু চাইলেই দিন
 
-    context += `\n\n🔥 বিশেষ শিক্ষকসুলভ নির্দেশনা:
-1. 🎯 সর্বদা বাংলায় স্পষ্ট ও সহজ ভাষায় উত্তর দিন
-2. 📚 NCTB বইয়ের কন্টেন্ট রেফারেন্স করে উত্তর দিন
-3. 🔗 যখন কেউ NCTB বইয়ের PDF লিংক চায়, তাদের সরাসরি লিংক দিন
-4. 🔍 যখন কেউ "কোন অধ্যায় থেকে কি প্রশ্ন আসে" জিজ্ঞেস করে:
-   - সেই অধ্যায়ের NCTB বই কন্টেন্ট বিশ্লেষণ করুন
-   - আগের বছরের বোর্ড প্রশ্ন প্যাটার্ন দেখান
-   - গুরুত্বপূর্ণ টপিক হাইলাইট করুন
-5. 💡 MCQ প্রশ্নের উত্তর দেওয়ার সময়:
-   - সঠিক উত্তর বলুন এবং ব্যাখ্যা করুন
-   - NCTB বই থেকে রেফারেন্স দিন
-   - কেন অন্য অপশনগুলো ভুল তা বুঝিয়ে দিন
-6. 🧠 জটিল বিষয় ভেঙে ভেঙে সহজ করে বলুন
-7. 🎓 পরীক্ষার কৌশল ও টিপস দিন
-8. 📖 বাংলাদেশের শিক্ষাক্রম অনুযায়ী উত্তর দিন
-9. 🌟 শিক্ষার্থীদের উৎসাহিত করুন
-10. 📊 প্রশ্ন প্যাটার্ন ও ট্রেন্ড বিশ্লেষণ করুন
-11. 🤝 বন্ধুত্বপূর্ণ কিন্তু সম্মানজনক ভাষা ব্যবহার করুন
-12. 📎 ফাইল আপলোড থাকলে সেটি বিশ্লেষণ করে উত্তর দিন
-13. 🔗 বই বা রিসোর্সের লিংক চাইলে সরাসরি প্রদান করুন
+শিক্ষার্থীর প্রশ্ন: ${message}`;
 
-আপনার শিক্ষার্থীর প্রশ্ন: ${message}`;
+    console.log('Calling Gemini API with focused context...');
 
-    console.log('Calling Gemini API with enhanced context...');
-
-    // Call Gemini API with enhanced settings for educational content analysis
+    // Call Gemini API
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
       method: 'POST',
       headers: {
@@ -178,9 +136,9 @@ serve(async (req) => {
           }]
         }],
         generationConfig: {
-          temperature: 0.8,
-          topP: 0.9,
-          maxOutputTokens: 1024,
+          temperature: 0.7,
+          topP: 0.8,
+          maxOutputTokens: 800,
         }
       }),
     });
@@ -234,7 +192,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('Successfully generated educational reply');
+    console.log('Successfully generated focused educational reply');
 
     return new Response(JSON.stringify({ reply: reply.trim() }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
