@@ -45,48 +45,66 @@ serve(async (req) => {
 
     console.log('Fetching context from database...');
 
-    // Fetch comprehensive context from database
-    const [mcqResult, boardResult, nctbResult, notesResult] = await Promise.all([
-      supabase.from('mcq_questions').select('*').limit(50),
-      supabase.from('board_questions').select('*').limit(20),
-      supabase.from('nctb_books').select('*').order('created_at', { ascending: false }).limit(10),
-      supabase.from('notes').select('*').limit(15)
+    // Check if user is asking for specific books
+    const bookRequest = message.toLowerCase().includes('বই') || 
+                       message.toLowerCase().includes('পিডিএফ') || 
+                       message.toLowerCase().includes('pdf') ||
+                       message.toLowerCase().includes('nctb');
+
+    let foundBooks = [];
+    let context = `আপনি একজন অভিজ্ঞত বাংলাদেশি শিক্ষক এবং AI সহায়ক। 
+
+🎯 গুরুত্বপূর্ণ নির্দেশনা:
+- শিক্ষার্থী যা জিজ্ঞেস করবে, ঠিক সেটারই উত্তর দিন
+- যদি কোনো বই চায় কিন্তু আপনার কাছে না থাকে, তাহলে বিনয়ের সাথে বলুন যে আপনার কাছে নেই
+- যদি বই পাওয়া যায়, তাহলে লিংক বা কন্টেন্ট শেয়ার করুন
+- MCQ চাইলে সরাসরি MCQ দিন
+- ব্যাখ্যা সহজ ও সংক্ষিপ্ত রাখুন`;
+
+    if (bookRequest) {
+      // Search for books in database
+      const { data: books } = await supabase
+        .from('nctb_books')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (books && books.length > 0) {
+        foundBooks = books;
+        context += `\n\n📚 আমার কাছে যে বইগুলো আছে:`;
+        books.forEach(book => {
+          context += `\n• ${book.title} (${book.class_level} শ্রেণী - ${book.subject})`;
+          if (book.file_url) {
+            context += `\n  🔗 PDF লিংক: ${book.file_url}`;
+          }
+          if (book.content) {
+            context += `\n  📖 কন্টেন্ট উপলব্ধ`;
+          }
+        });
+        context += `\n\nযদি আপনার চাহিদামতো বই উপরে না থাকে, তাহলে আমি দুঃখিত - আমার কাছে সেটি নেই।`;
+      } else {
+        context += `\n\n📚 দুঃখিত, আমার কাছে এই মুহূর্তে কোনো NCTB বই নেই। তবে আপনি চাইলে আমি অন্যভাবে সাহায্য করতে পারি।`;
+      }
+    }
+
+    // Add other data contexts
+    const [mcqResult, boardResult, notesResult] = await Promise.all([
+      supabase.from('mcq_questions').select('*').limit(20),
+      supabase.from('board_questions').select('*').limit(10),
+      supabase.from('notes').select('*').limit(10)
     ]);
 
     console.log('Database context fetched:', {
       mcq: mcqResult.data?.length || 0,
       board: boardResult.data?.length || 0,
-      nctb: nctbResult.data?.length || 0,
+      books: foundBooks.length,
       notes: notesResult.data?.length || 0
     });
-
-    // Enhanced context with focus on direct answers
-    let context = `আপনি একজন অভিজ্ঞ বাংলাদেশি শিক্ষক এবং AI সহায়ক। আপনার কাজ হলো ছাত্রছাত্রীদের প্রশ্নের সরাসরি ও স্পষ্ট উত্তর দেওয়া।
-
-🎯 গুরুত্বপূর্ণ নির্দেশনা:
-- শিক্ষার্থী যা জিজ্ঞেস করবে, ঠিক সেটারই উত্তর দিন
-- অপ্রয়োজনীয় লিংক বা অতিরিক্ত তথ্য দেবেন না
-- MCQ চাইলে সরাসরি MCQ দিন
-- সমাধান চাইলে সরাসরি সমাধান দিন
-- ব্যাখ্যা সহজ ও সংক্ষিপ্ত রাখুন
-
-🎓 আপনার বিশেষত্ব:
-- MCQ প্রশ্ন ও উত্তর বিশ্লেষণ
-- বোর্ড প্রশ্ন প্যাটার্ন
-- NCTB বই কন্টেন্ট
-- পাঠ্যবই সমাধান
-
-📚 উপলব্ধ ডেটা:
-- MCQ প্রশ্ন: ${mcqResult.data?.length || 0}টি
-- বোর্ড প্রশ্ন: ${boardResult.data?.length || 0}টি  
-- NCTB বই: ${nctbResult.data?.length || 0}টি
-- নোট: ${notesResult.data?.length || 0}টি`;
 
     // Add MCQ examples if user asks about MCQ
     if (message.toLowerCase().includes('mcq') || message.toLowerCase().includes('এমসিকিউ')) {
       if (mcqResult.data && mcqResult.data.length > 0) {
         context += `\n\n📊 MCQ উদাহরণ:`;
-        mcqResult.data.slice(0, 5).forEach((mcq, index) => {
+        mcqResult.data.slice(0, 3).forEach((mcq, index) => {
           context += `\n\n${index + 1}. ${mcq.question}`;
           if (mcq.option_a) context += `\na) ${mcq.option_a}`;
           if (mcq.option_b) context += `\nb) ${mcq.option_b}`;
@@ -98,30 +116,16 @@ serve(async (req) => {
       }
     }
 
-    // Add NCTB content if user asks about books
-    if (message.toLowerCase().includes('বই') || message.toLowerCase().includes('nctb') || message.toLowerCase().includes('পিডিএফ')) {
-      if (nctbResult.data && nctbResult.data.length > 0) {
-        context += `\n\n📖 NCTB বই তথ্য:`;
-        nctbResult.data.forEach(book => {
-          context += `\n• ${book.title} (${book.class_level} শ্রেণী - ${book.subject})`;
-          if (book.file_url) {
-            context += `\n  🔗 লিংক: ${book.file_url}`;
-          }
-        });
-      }
-    }
-
     context += `\n\n📝 উত্তর দেওয়ার নিয়ম:
-1. সরাসরি প্রশ্নের উত্তর দিন
-2. সহজ বাংলায় ব্যাখ্যা করুন  
-3. প্রয়োজনে উদাহরণ দিন
-4. MCQ চাইলে অপশন সহ দিন
+1. বই চাইলে প্রথমে বলুন আপনার কাছে আছে কিনা
+2. থাকলে লিংক বা কন্টেন্ট দিন, না থাকলে বিনয়ের সাথে বলুন
+3. MCQ চাইলে অপশন সহ দিন
+4. সহজ বাংলায় ব্যাখ্যা করুন
 5. অপ্রাসঙ্গিক তথ্য দেবেন না
-6. লিংক শুধু চাইলেই দিন
 
 শিক্ষার্থীর প্রশ্ন: ${message}`;
 
-    console.log('Calling Gemini API with focused context...');
+    console.log('Calling Gemini API with enhanced book search context...');
 
     // Call Gemini API
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`, {
@@ -192,7 +196,7 @@ serve(async (req) => {
       });
     }
 
-    console.log('Successfully generated focused educational reply');
+    console.log('Successfully generated enhanced educational reply with book search');
 
     return new Response(JSON.stringify({ reply: reply.trim() }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
