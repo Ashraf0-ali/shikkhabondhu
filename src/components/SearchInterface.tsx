@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Search, FileText, BookOpen, Book, FileTextIcon, Loader2 } from 'lucide-react';
+import { Search, FileText, BookOpen, Book, FileTextIcon, Loader2, ExternalLink, Download } from 'lucide-react';
 
 const SearchInterface = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -96,6 +96,15 @@ const SearchInterface = () => {
     }
   };
 
+  const handleFileOpen = (fileUrl: string, title: string) => {
+    if (fileUrl) {
+      // Open in new tab/window
+      window.open(fileUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      alert('ফাইল লিংক উপলব্ধ নেই');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4 pb-20">
       <div className="max-w-4xl mx-auto space-y-6">
@@ -172,6 +181,11 @@ const SearchInterface = () => {
                                     {result.year}
                                   </Badge>
                                 )}
+                                {result.class_level && (
+                                  <Badge variant="outline" className="text-xs">
+                                    শ্রেণী {result.class_level}
+                                  </Badge>
+                                )}
                               </div>
                               <h3 className="font-medium text-gray-900 dark:text-gray-100 bangla-text mb-1">
                                 {result.title || result.question?.substring(0, 100) + '...' || 'শিরোনাম নেই'}
@@ -190,6 +204,33 @@ const SearchInterface = () => {
                                 <p className="text-xs text-gray-500 bangla-text mt-1">
                                   অধ্যায়: {result.chapter}
                                 </p>
+                              )}
+                              
+                              {/* File Actions */}
+                              {result.file_url && (
+                                <div className="mt-3 flex gap-2">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleFileOpen(result.file_url, result.title)}
+                                    className="bangla-text"
+                                  >
+                                    <ExternalLink className="w-4 h-4 mr-1" />
+                                    পিডিএফ খুলুন
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      navigator.clipboard.writeText(result.file_url);
+                                      alert('লিংক কপি হয়েছে!');
+                                    }}
+                                    className="bangla-text"
+                                  >
+                                    <Download className="w-4 h-4 mr-1" />
+                                    লিংক কপি
+                                  </Button>
+                                </div>
                               )}
                             </div>
                           </div>
