@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -342,7 +343,7 @@ const ChatInterface = () => {
       </div>
 
       {/* Messages Area */}
-      <div className={`flex-1 overflow-hidden pb-4 ${isKeyboardVisible ? 'mb-0' : 'mb-16'}`}>
+      <div className="flex-1 overflow-hidden" style={{ paddingBottom: isKeyboardVisible ? '80px' : '80px' }}>
         <ScrollArea className="h-full px-4 py-4">
           <div className="max-w-3xl mx-auto space-y-4">
             {messages.map((message) => (
@@ -414,8 +415,8 @@ const ChatInterface = () => {
         </ScrollArea>
       </div>
 
-      {/* Input Area - Fixed at bottom */}
-      <div className={`fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 transition-all duration-300 ${isKeyboardVisible ? 'z-50' : 'z-20'}`}>
+      {/* Input Area - Always visible at bottom */}
+      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4">
         <div className="max-w-3xl mx-auto">
           {/* File Upload Preview */}
           {uploadedFile && (
