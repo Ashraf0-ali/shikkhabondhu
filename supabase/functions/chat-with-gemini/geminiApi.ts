@@ -1,7 +1,7 @@
 
 export const callGeminiAPI = async (context: string, geminiApiKey: string, retryCount = 0) => {
-  const maxRetries = 3;
-  const baseDelay = 2000; // 2 seconds
+  const maxRetries = 2; // Reduced from 3
+  const baseDelay = 1000; // Reduced from 2000ms to 1000ms
   
   console.log(`Calling Gemini API (attempt ${retryCount + 1}/${maxRetries + 1}) with context and chat history...`);
 
@@ -20,9 +20,9 @@ export const callGeminiAPI = async (context: string, geminiApiKey: string, retry
       body: JSON.stringify({
         contents: messages,
         generationConfig: {
-          temperature: 0.7,
-          topP: 0.8,
-          maxOutputTokens: 1000,
+          temperature: 0.5, // Reduced from 0.7 for faster, more focused responses
+          topP: 0.7, // Reduced from 0.8
+          maxOutputTokens: 500, // Reduced from 1000 for faster responses
         }
       }),
     });
@@ -31,9 +31,9 @@ export const callGeminiAPI = async (context: string, geminiApiKey: string, retry
       const errorText = await response.text();
       console.error('Gemini API error:', response.status, errorText);
       
-      // If rate limit hit and we have retries left, wait and retry
+      // Reduced retry logic for faster failure
       if (response.status === 429 && retryCount < maxRetries) {
-        const delay = baseDelay * Math.pow(2, retryCount); // Exponential backoff
+        const delay = baseDelay * (retryCount + 1); // Linear backoff instead of exponential
         console.log(`Rate limited. Waiting ${delay}ms before retry ${retryCount + 1}...`);
         
         await new Promise(resolve => setTimeout(resolve, delay));
@@ -45,7 +45,7 @@ export const callGeminiAPI = async (context: string, geminiApiKey: string, retry
       if (response.status === 401) {
         errorMessage = 'API কী সংক্রান্ত সমস্যা। অনুগ্রহ করে পরে চেষ্টা করুন।';
       } else if (response.status === 429) {
-        errorMessage = '⚡ AI সেবা ব্যস্ত আছে। ১-২ মিনিট পর আবার চেষ্টা করুন।\n\n💡 টিপসঃ একটু অপেক্ষা করে প্রশ্ন করলে দ্রুত উত্তর পাবেন।';
+        errorMessage = '⚡ AI সেবা ব্যস্ত। ১ মিনিট পর চেষ্টা করুন।';
       } else if (response.status >= 500) {
         errorMessage = 'সার্ভার সমস্যা। কিছুক্ষণ পর আবার চেষ্টা করুন।';
       }
@@ -82,9 +82,9 @@ export const callGeminiAPI = async (context: string, geminiApiKey: string, retry
   } catch (fetchError) {
     console.error('Network error calling Gemini API:', fetchError);
     
-    // Retry on network errors
+    // Faster retry on network errors
     if (retryCount < maxRetries) {
-      const delay = baseDelay * Math.pow(2, retryCount);
+      const delay = baseDelay * (retryCount + 1);
       console.log(`Network error. Waiting ${delay}ms before retry ${retryCount + 1}...`);
       
       await new Promise(resolve => setTimeout(resolve, delay));

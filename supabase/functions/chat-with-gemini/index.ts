@@ -6,7 +6,6 @@ import { createSupabaseClient, fetchBooks, fetchEducationalData } from './databa
 import { buildBaseContext, buildBookContext, buildMCQContext, buildFinalInstructions } from './contextBuilders.ts';
 import { callGeminiAPI } from './geminiApi.ts';
 import { detectBookRequest, detectMCQRequest, validateRequest, validateApiKey } from './utils.ts';
-import { checkRateLimit } from './rateLimiter.ts';
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -29,21 +28,6 @@ serve(async (req) => {
     }
 
     const { message, chatHistory } = await req.json();
-    
-    // Get user ID from auth header (if available)
-    const authHeader = req.headers.get('Authorization');
-    const userId = authHeader ? authHeader.split(' ')[1] : 'anonymous';
-
-    // Check rate limit
-    const rateLimitCheck = checkRateLimit(userId);
-    if (!rateLimitCheck.allowed) {
-      return new Response(JSON.stringify({ 
-        error: rateLimitCheck.message 
-      }), {
-        status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
 
     // Validate request
     const requestError = validateRequest(message);
@@ -61,10 +45,9 @@ serve(async (req) => {
 
     console.log('Fetching context from database...');
     console.log('Chat history length:', chatHistory?.length || 0);
-    console.log('User ID:', userId);
 
-    // Build base context
-    let context = buildBaseContext(chatHistory);
+    // Build base context (smaller for faster processing)
+    let context = buildBaseContext(chatHistory?.slice(-4) || []); // Only last 4 messages
 
     // Handle book requests
     const bookRequest = detectBookRequest(message);
@@ -74,13 +57,13 @@ serve(async (req) => {
       foundBooks = await fetchBooks(supabase);
       
       if (foundBooks.length > 0) {
-        context += buildBookContext(foundBooks, message);
+        context += buildBookContext(foundBooks.slice(0, 3), message); // Limit to 3 books
       } else {
         context += `\n\n📚 দুঃখিত, আমার কাছে এই মুহূর্তে কোনো NCTB বই নেই। তবে আপনি চাইলে আমি অন্যভাবে সাহায্য করতে পারি।`;
       }
     }
 
-    // Add other educational data
+    // Add other educational data (limited for speed)
     const { mcq, board, notes } = await fetchEducationalData(supabase);
 
     console.log('Database context fetched:', {
@@ -90,15 +73,15 @@ serve(async (req) => {
       notes: notes.length
     });
 
-    // Add MCQ context if requested
+    // Add MCQ context if requested (limited)
     if (detectMCQRequest(message) && mcq.length > 0) {
-      context += buildMCQContext(mcq);
+      context += buildMCQContext(mcq.slice(0, 5)); // Limit to 5 MCQs
     }
 
     // Add final instructions
     context += buildFinalInstructions(message, foundBooks);
 
-    // Call Gemini API with retry mechanism
+    // Call Gemini API with faster settings
     const reply = await callGeminiAPI(context, geminiApiKey!);
 
     return new Response(JSON.stringify({ reply }), {
