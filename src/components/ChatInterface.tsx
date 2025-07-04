@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -89,14 +88,6 @@ const ChatInterface = () => {
         const heightDiff = window.innerHeight - window.visualViewport.height;
         setIsKeyboardVisible(heightDiff > 150);
       }
-    };
-
-    const handleFocus = () => {
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 300);
     };
 
     if (window.visualViewport) {
@@ -351,7 +342,7 @@ const ChatInterface = () => {
       </div>
 
       {/* Messages Area */}
-      <div className={`flex-1 overflow-hidden ${isKeyboardVisible ? 'pb-2' : 'pb-20'}`}>
+      <div className={`flex-1 overflow-hidden pb-4 ${isKeyboardVisible ? 'mb-0' : 'mb-16'}`}>
         <ScrollArea className="h-full px-4 py-4">
           <div className="max-w-3xl mx-auto space-y-4">
             {messages.map((message) => (
@@ -423,8 +414,8 @@ const ChatInterface = () => {
         </ScrollArea>
       </div>
 
-      {/* Input Area */}
-      <div className={`${isKeyboardVisible ? 'fixed bottom-0' : 'fixed bottom-16'} left-0 right-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 z-20 transition-all duration-300`}>
+      {/* Input Area - Fixed at bottom */}
+      <div className={`fixed bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-4 transition-all duration-300 ${isKeyboardVisible ? 'z-50' : 'z-20'}`}>
         <div className="max-w-3xl mx-auto">
           {/* File Upload Preview */}
           {uploadedFile && (
@@ -461,12 +452,6 @@ const ChatInterface = () => {
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
                 onKeyPress={handleKeyPress}
-                onFocus={(e) => {
-                  // Scroll input into view on mobile
-                  setTimeout(() => {
-                    e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                  }, 300);
-                }}
                 placeholder="মেসেজ লিখুন..."
                 className="pr-12 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 focus:ring-blue-500 bangla-text h-11 text-sm rounded-full"
                 disabled={isLoading}

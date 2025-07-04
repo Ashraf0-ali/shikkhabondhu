@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Home, BookOpen, FileQuestion, Settings, Gamepad2 } from 'lucide-react';
 
 const BottomNavigation = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   const navItems = [
     { icon: Home, label: '🏠 Home', path: '/' },
@@ -14,6 +15,34 @@ const BottomNavigation = () => {
     { icon: Settings, label: '🛠️ Admin', path: '/admin' },
     { icon: Gamepad2, label: '🎮 Quiz', path: '/quiz' }
   ];
+
+  // Handle keyboard visibility
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.visualViewport) {
+        const heightDiff = window.innerHeight - window.visualViewport.height;
+        setIsKeyboardVisible(heightDiff > 150);
+      }
+    };
+
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleResize);
+    }
+
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      if (window.visualViewport) {
+        window.visualViewport.removeEventListener('resize', handleResize);
+      }
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
+
+  // Hide bottom navigation when keyboard is visible and on chat page
+  if (isKeyboardVisible && location.pathname === '/chat') {
+    return null;
+  }
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border-t border-white/20 shadow-lg z-50">
