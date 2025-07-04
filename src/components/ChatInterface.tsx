@@ -1,9 +1,10 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Bot, User, Loader2, Paperclip, X } from 'lucide-react';
+import { Send, Bot, User, Loader2, Paperclip, X, Image, FileText } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -15,6 +16,7 @@ interface Message {
   timestamp: Date;
   hasFile?: boolean;
   fileName?: string;
+  fileType?: string;
 }
 
 const ChatInterface = () => {
@@ -23,6 +25,7 @@ const ChatInterface = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
@@ -41,10 +44,12 @@ const ChatInterface = () => {
   });
 
   // Auto-scroll to bottom when new messages arrive
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight;
-    }
+    scrollToBottom();
   }, [messages]);
 
   // Initial welcome message
@@ -92,6 +97,16 @@ const ChatInterface = () => {
     }
   };
 
+  const getFileIcon = (fileType: string) => {
+    if (fileType.startsWith('image/')) {
+      return <Image className="w-4 h-4" />;
+    } else if (fileType === 'application/pdf') {
+      return <FileText className="w-4 h-4 text-red-500" />;
+    } else {
+      return <FileText className="w-4 h-4" />;
+    }
+  };
+
   const sendMessage = async () => {
     if ((!inputMessage.trim() && !uploadedFile) || isLoading) return;
 
@@ -106,7 +121,7 @@ const ChatInterface = () => {
     }
 
     const messageContent = uploadedFile ? 
-      `${inputMessage.trim() || 'ফাইল আপলোড করেছি'} [ফাইল: ${uploadedFile.name}]` : 
+      `${inputMessage.trim() || 'ফাইল আপলোড করেছি'}` : 
       inputMessage.trim();
 
     const userMessage: Message = {
@@ -115,7 +130,8 @@ const ChatInterface = () => {
       role: 'user',
       timestamp: new Date(),
       hasFile: !!uploadedFile,
-      fileName: uploadedFile?.name
+      fileName: uploadedFile?.name,
+      fileType: uploadedFile?.type
     };
 
     setMessages(prev => [...prev, userMessage]);
@@ -211,218 +227,226 @@ const ChatInterface = () => {
   // Show loading while checking settings
   if (isLoadingSettings) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl max-w-md w-full">
-          <CardContent className="p-8 text-center">
-            <Loader2 className="w-16 h-16 mx-auto mb-4 text-blue-500 animate-spin" />
-            <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-2 bangla-text">
-              চ্যাটবট লোড হচ্ছে...
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 bangla-text">
-              অনুগ্রহ করে অপেক্ষা করুন
-            </p>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center">
+          <Loader2 className="w-8 h-8 mx-auto mb-4 text-blue-500 animate-spin" />
+          <p className="text-gray-600 bangla-text">চ্যাটবট লোড হচ্ছে...</p>
+        </div>
       </div>
     );
   }
 
   if (!chatbotSettings?.is_enabled) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl max-w-md w-full">
-          <CardContent className="p-8 text-center">
-            <Bot className="w-16 h-16 mx-auto mb-4 text-gray-400" />
-            <h2 className="text-2xl font-bold text-gray-700 dark:text-gray-300 mb-2 bangla-text">
-              চ্যাটবট সেবা বন্ধ
-            </h2>
-            <p className="text-gray-600 dark:text-gray-400 bangla-text">
-              চ্যাটবট সেবা বর্তমানে রক্ষণাবেক্ষণের জন্য বন্ধ রয়েছে। অসুবিধার জন্য দুঃখিত।
-            </p>
-          </CardContent>
-        </Card>
+      <div className="flex items-center justify-center h-screen">
+        <div className="text-center max-w-md">
+          <Bot className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+          <h2 className="text-xl font-bold text-gray-700 mb-2 bangla-text">
+            চ্যাটবট সেবা বন্ধ
+          </h2>
+          <p className="text-gray-600 bangla-text">
+            চ্যাটবট সেবা বর্তমানে রক্ষণাবেক্ষণের জন্য বন্ধ রয়েছে।
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4 pb-24">
-      <div className="max-w-4xl mx-auto space-y-6">
-        {/* Header */}
-        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
-          <CardHeader className="text-center py-6">
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent mb-2 bangla-text">
-              🤖 AI শিক্ষক
-            </CardTitle>
-            <p className="text-gray-600 dark:text-gray-300 bangla-text">
-              আপনার ব্যক্তিগত পড়াশোনার সহায়ক - ফাইল আপলোড সহ
+    <div className="flex flex-col h-screen bg-white dark:bg-gray-900">
+      {/* Header - Fixed */}
+      <div className="flex-shrink-0 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 px-4 py-3">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+            <Bot className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-white bangla-text">
+              AI শিক্ষক
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400 bangla-text">
+              আপনার ব্যক্তিগত পড়াশোনার সহায়ক
             </p>
-          </CardHeader>
-        </Card>
+          </div>
+        </div>
+      </div>
 
-        {/* Chat Messages */}
-        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
-          <CardContent className="p-0">
-            <ScrollArea 
-              ref={scrollAreaRef}
-              className="h-[500px] p-6 space-y-4"
-            >
-              {messages.map((message) => (
-                <div
-                  key={message.id}
-                  className={`flex items-start gap-3 ${
-                    message.role === 'user' ? 'flex-row-reverse' : ''
-                  }`}
-                >
-                  <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${
+      {/* Messages Area - Scrollable */}
+      <div className="flex-1 overflow-hidden">
+        <ScrollArea className="h-full px-4 py-4">
+          <div className="max-w-4xl mx-auto space-y-6">
+            {messages.map((message) => (
+              <div key={message.id} className="flex gap-4">
+                {/* Avatar */}
+                <div className="flex-shrink-0">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
                     message.role === 'user' 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-purple-500 text-white'
+                      ? 'bg-blue-500' 
+                      : 'bg-green-500'
                   }`}>
-                    {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                  </div>
-                  <div className={`flex-1 max-w-[80%] ${message.role === 'user' ? 'text-right' : ''}`}>
-                    <div className={`rounded-2xl px-4 py-3 ${
-                      message.role === 'user'
-                        ? 'bg-blue-500 text-white ml-8'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 mr-8'
-                    }`}>
-                      <p className="whitespace-pre-wrap bangla-text leading-relaxed">
-                        {message.content}
-                      </p>
-                      {message.hasFile && (
-                        <div className="mt-2 text-xs opacity-75">
-                          📎 {message.fileName}
-                        </div>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1 px-2">
-                      {message.timestamp.toLocaleTimeString()}
-                    </p>
+                    {message.role === 'user' ? 
+                      <User className="w-4 h-4 text-white" /> : 
+                      <Bot className="w-4 h-4 text-white" />
+                    }
                   </div>
                 </div>
-              ))}
-              {isLoading && (
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-500 text-white flex items-center justify-center">
-                    <Bot className="w-4 h-4" />
+
+                {/* Message Content */}
+                <div className="flex-1 min-w-0">
+                  <div className="mb-2">
+                    <span className="text-sm font-medium text-gray-900 dark:text-white bangla-text">
+                      {message.role === 'user' ? 'আপনি' : 'AI শিক্ষক'}
+                    </span>
+                    <span className="ml-2 text-xs text-gray-500">
+                      {message.timestamp.toLocaleTimeString()}
+                    </span>
                   </div>
-                  <div className="flex-1 max-w-[80%]">
-                    <div className="bg-gray-100 dark:bg-gray-700 rounded-2xl px-4 py-3 mr-8">
+                  
+                  {/* File attachment display */}
+                  {message.hasFile && (
+                    <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg border">
                       <div className="flex items-center gap-2">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-gray-600 dark:text-gray-300 bangla-text">
-                          চিন্তা করছি...
+                        {getFileIcon(message.fileType || '')}
+                        <span className="text-sm text-gray-700 dark:text-gray-300 bangla-text">
+                          {message.fileName}
                         </span>
                       </div>
                     </div>
+                  )}
+                  
+                  <div className="prose prose-sm max-w-none dark:prose-invert">
+                    <p className="whitespace-pre-wrap text-gray-800 dark:text-gray-200 bangla-text leading-relaxed">
+                      {message.content}
+                    </p>
                   </div>
                 </div>
-              )}
-            </ScrollArea>
-          </CardContent>
-        </Card>
+              </div>
+            ))}
 
-        {/* Input Area */}
-        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
-          <CardContent className="p-4">
-            {/* File Upload Preview */}
-            {uploadedFile && (
-              <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Paperclip className="w-4 h-4 text-blue-600" />
-                    <span className="text-sm text-blue-800 dark:text-blue-200 bangla-text">
-                      {uploadedFile.name}
-                    </span>
-                    <span className="text-xs text-blue-600 dark:text-blue-400">
-                      ({(uploadedFile.size / 1024).toFixed(1)} KB)
+            {/* Loading indicator */}
+            {isLoading && (
+              <div className="flex gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-8 h-8 rounded-full bg-green-500 flex items-center justify-center">
+                    <Bot className="w-4 h-4 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="mb-2">
+                    <span className="text-sm font-medium text-gray-900 dark:text-white bangla-text">
+                      AI শিক্ষক
                     </span>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={removeFile}
-                    className="h-6 w-6 p-0 text-red-500 hover:text-red-700"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin text-gray-500" />
+                    <span className="text-gray-500 bangla-text">চিন্তা করছি...</span>
+                  </div>
                 </div>
               </div>
             )}
             
-            <div className="flex gap-3">
-              <div className="flex-1 relative">
-                <Input
-                  value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="আপনার প্রশ্ন লিখুন বা ফাইল আপলোড করুন..."
-                  className="bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:ring-blue-500 bangla-text pr-12"
-                  disabled={isLoading}
-                />
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*,.pdf,.txt"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                  disabled={isLoading}
-                />
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+      </div>
+
+      {/* Input Area - Fixed */}
+      <div className="flex-shrink-0 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 p-4">
+        <div className="max-w-4xl mx-auto">
+          {/* File Upload Preview */}
+          {uploadedFile && (
+            <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  {getFileIcon(uploadedFile.type)}
+                  <div>
+                    <span className="text-sm font-medium text-blue-800 dark:text-blue-200 bangla-text">
+                      {uploadedFile.name}
+                    </span>
+                    <p className="text-xs text-blue-600 dark:text-blue-400">
+                      {(uploadedFile.size / 1024).toFixed(1)} KB
+                    </p>
+                  </div>
+                </div>
                 <Button
-                  type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={isLoading}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 text-gray-500 hover:text-blue-600"
+                  onClick={removeFile}
+                  className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                 >
-                  <Paperclip className="w-4 h-4" />
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
+            </div>
+          )}
+          
+          {/* Input Row */}
+          <div className="flex gap-3">
+            <div className="flex-1 relative">
+              <Input
+                value={inputMessage}
+                onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="আপনার প্রশ্ন লিখুন..."
+                className="pr-12 bg-gray-50 dark:bg-gray-800 border-gray-300 dark:border-gray-600 focus:ring-blue-500 bangla-text"
+                disabled={isLoading}
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,.pdf,.txt"
+                onChange={handleFileSelect}
+                className="hidden"
+                disabled={isLoading}
+              />
               <Button
-                onClick={sendMessage}
-                disabled={isLoading || (!inputMessage.trim() && !uploadedFile)}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600 text-white shadow-lg"
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isLoading}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8 p-0 text-gray-500 hover:text-blue-600 hover:bg-blue-50"
               >
-                {isLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
+                <Paperclip className="w-4 h-4" />
               </Button>
             </div>
-          </CardContent>
-        </Card>
+            <Button
+              onClick={sendMessage}
+              disabled={isLoading || (!inputMessage.trim() && !uploadedFile)}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2"
+            >
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
 
-        {/* Quick Suggestions */}
-        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
-          <CardContent className="p-4">
-            <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3 bangla-text">
-              দ্রুত প্রশ্ন:
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+          {/* Quick Suggestions */}
+          <div className="mt-3">
+            <div className="flex flex-wrap gap-2">
               {[
-                "গণিতের একটি সমস্যা সমাধান করুন",
-                "ইংরেজি গ্রামার ব্যাখ্যা করুন",
-                "বিজ্ঞানের একটি ধারণা বুঝিয়ে দিন",
-                "ইতিহাসের একটি ঘটনা বলুন",
-                "MCQ সমাধানের কৌশল",
-                "পরীক্ষার প্রস্তুতির টিপস"
+                "গণিতের সমস্যা সমাধান",
+                "ইংরেজি গ্রামার",
+                "বিজ্ঞানের ধারণা",
+                "MCQ সমাধান",
+                "পরীক্ষার টিপস"
               ].map((suggestion, index) => (
                 <Button
                   key={index}
                   variant="outline"
+                  size="sm"
                   onClick={() => setInputMessage(suggestion)}
-                  className="text-left justify-start h-auto py-2 px-3 text-sm bangla-text hover:bg-blue-50 dark:hover:bg-gray-700"
+                  className="text-xs bangla-text hover:bg-blue-50 dark:hover:bg-gray-800"
                   disabled={isLoading}
                 >
                   {suggestion}
                 </Button>
               ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
