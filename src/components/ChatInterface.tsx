@@ -365,15 +365,18 @@ const ChatInterface = () => {
               </p>
             </div>
           </div>
-          <Button
-            onClick={clearChatHistory}
-            className="bg-blue-500 hover:bg-blue-600 text-white shadow-lg bangla-text"
-            size="sm"
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            নতুন চ্যাট
-          </Button>
         </div>
+      </div>
+
+      {/* Floating New Chat Button */}
+      <div className="fixed top-20 right-4 z-50">
+        <Button
+          onClick={clearChatHistory}
+          className="bg-blue-500 hover:bg-blue-600 text-white shadow-lg rounded-full p-3 bangla-text"
+          size="sm"
+        >
+          <Plus className="w-5 h-5" />
+        </Button>
       </div>
 
       {/* Messages Area */}
