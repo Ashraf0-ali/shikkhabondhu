@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Send, Bot, User, Loader2, Paperclip, X, Image, FileText } from 'lucide-react';
+import { Send, Bot, User, Loader2, Paperclip, X, Image, FileText, Plus } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useQuery } from '@tanstack/react-query';
@@ -17,6 +16,7 @@ interface Message {
   hasFile?: boolean;
   fileName?: string;
   fileType?: string;
+  pdfLinks?: Array<{title: string, url: string}>;
 }
 
 const ChatInterface = () => {
@@ -168,6 +168,36 @@ const ChatInterface = () => {
     });
   };
 
+  const handlePdfOpen = (url: string, title: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  // Parse PDF links from message content
+  const parsePdfLinks = (content: string) => {
+    const linkRegex = /🔗 PDF লিংক: (https?:\/\/[^\s]+)/g;
+    const titleRegex = /• ([^(]+) \(/g;
+    const links: Array<{title: string, url: string}> = [];
+    
+    let match;
+    const urls: string[] = [];
+    const titles: string[] = [];
+    
+    while ((match = linkRegex.exec(content)) !== null) {
+      urls.push(match[1]);
+    }
+    
+    let titleMatch;
+    while ((titleMatch = titleRegex.exec(content)) !== null) {
+      titles.push(titleMatch[1].trim());
+    }
+    
+    for (let i = 0; i < Math.min(urls.length, titles.length); i++) {
+      links.push({ title: titles[i], url: urls[i] });
+    }
+    
+    return links;
+  };
+
   const sendMessage = async () => {
     if ((!inputMessage.trim() && !uploadedFile) || isLoading) return;
 
@@ -239,11 +269,15 @@ const ChatInterface = () => {
         throw new Error('Empty response from AI');
       }
 
+      // Parse PDF links from the response
+      const pdfLinks = parsePdfLinks(data.reply);
+
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         content: data.reply,
         role: 'assistant',
-        timestamp: new Date()
+        timestamp: new Date(),
+        pdfLinks: pdfLinks.length > 0 ? pdfLinks : undefined
       };
 
       setMessages(prev => [...prev, assistantMessage]);
@@ -331,17 +365,19 @@ const ChatInterface = () => {
               </p>
             </div>
           </div>
-          <div className="pr-12">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={clearChatHistory}
-              className="text-xs bangla-text"
-            >
-              নতুন চ্যাট
-            </Button>
-          </div>
         </div>
+      </div>
+
+      {/* Floating New Chat Button */}
+      <div className="fixed top-20 right-4 z-50">
+        <Button
+          onClick={clearChatHistory}
+          className="bg-blue-500 hover:bg-blue-600 text-white shadow-lg rounded-full p-3 bangla-text"
+          size="sm"
+        >
+          <Plus className="w-4 h-4 mr-1" />
+          নতুন চ্যাট
+        </Button>
       </div>
 
       {/* Messages Area */}
@@ -380,6 +416,24 @@ const ChatInterface = () => {
                       {message.content}
                     </p>
                   </div>
+
+                  {/* PDF Action Buttons */}
+                  {message.pdfLinks && message.pdfLinks.length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      {message.pdfLinks.map((pdfLink, index) => (
+                        <Button
+                          key={index}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handlePdfOpen(pdfLink.url, pdfLink.title)}
+                          className="bangla-text bg-green-50 hover:bg-green-100 border-green-200 text-green-800 w-full justify-start"
+                        >
+                          <FileText className="w-4 h-4 mr-2 text-green-600" />
+                          📖 {pdfLink.title} - PDF খুলুন
+                        </Button>
+                      ))}
+                    </div>
+                  )}
                   
                   <div className={`text-xs text-gray-500 mt-1 ${message.role === 'user' ? 'text-right' : 'text-left'}`}>
                     {message.timestamp.toLocaleTimeString('bn-BD', { 
