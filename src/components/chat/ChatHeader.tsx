@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Bot, Plus } from 'lucide-react';
+import { Bot } from 'lucide-react';
 
 interface ChatHeaderProps {
   onClearHistory: () => void;
@@ -27,14 +27,13 @@ const ChatHeader = ({ onClearHistory }: ChatHeaderProps) => {
             </div>
           </div>
           
-          {/* New Chat Button - Professional Design with proper positioning */}
-          <div className="flex items-center">
+          {/* New Chat Button - Moved further left and removed + icon */}
+          <div className="flex items-center mr-16">
             <Button
               onClick={onClearHistory}
-              className="bg-blue-600 dark:bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium font-shurjo transition-all duration-200 shadow-sm hover:shadow-md mr-4"
+              className="bg-gray-800 dark:bg-gray-700 hover:bg-gray-900 dark:hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium font-shurjo transition-all duration-200"
               size="sm"
             >
-              <Plus className="w-4 h-4 mr-1" />
               নতুন চ্যাট
             </Button>
           </div>
