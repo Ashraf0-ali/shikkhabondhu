@@ -67,6 +67,7 @@
 @layer base {
   * {
     @apply border-border;
+    font-family: 'ShujoUnicodeRegular', 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, -apple-system, 'Segoe UI', sans-serif !important;
   }
   
   html {
@@ -74,11 +75,12 @@
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-family: 'ShujoUnicodeRegular', 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, -apple-system, 'Segoe UI', sans-serif !important;
   }
   
   body {
     @apply bg-background text-foreground;
-    font-family: 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, -apple-system, 'Segoe UI', sans-serif !important;
+    font-family: 'ShujoUnicodeRegular', 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, -apple-system, 'Segoe UI', sans-serif !important;
     font-feature-settings: "kern" 1, "liga" 1;
     line-height: 1.6;
     letter-spacing: 0.01em;
@@ -88,7 +90,7 @@
 
 /* Enhanced Bengali Font Classes with Shurjo as primary */
 .bangla-text {
-  font-family: 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, sans-serif !important;
+  font-family: 'ShujoUnicodeRegular', 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, sans-serif !important;
   font-weight: 400;
   line-height: 1.7;
   letter-spacing: 0.01em;
@@ -99,7 +101,7 @@
 }
 
 .bangla-heading {
-  font-family: 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, sans-serif !important;
+  font-family: 'ShujoUnicodeRegular', 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, sans-serif !important;
   font-weight: 500;
   line-height: 1.5;
   letter-spacing: 0.005em;
@@ -109,7 +111,7 @@
 
 /* Universal Bengali text support with Shurjo as primary */
 h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea, label {
-  font-family: 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, sans-serif !important;
+  font-family: 'ShujoUnicodeRegular', 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, sans-serif !important;
 }
 
 /* Improved dark mode icons visibility */
@@ -193,7 +195,7 @@ h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea, label {
 
 @font-face {
   font-family: 'Bengali-System';
-  src: local('Shurjo'), local('ShujoMJ'), local('Kalpurush'), local('SolaimanLipi'), local('Noto Sans Bengali');
+  src: local('ShujoUnicodeRegular'), local('Shurjo'), local('ShujoMJ'), local('Kalpurush'), local('SolaimanLipi'), local('Noto Sans Bengali');
   font-display: swap;
   unicode-range: U+0980-U+09FF, U+200C-U+200D, U+25CC;
 }

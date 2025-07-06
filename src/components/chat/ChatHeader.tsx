@@ -27,14 +27,17 @@ const ChatHeader = ({ onClearHistory }: ChatHeaderProps) => {
             </div>
           </div>
           
-          {/* New Chat Button - Professional Design */}
-          <Button
-            onClick={onClearHistory}
-            className="bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 px-4 py-2 rounded-lg font-medium font-shurjo transition-all duration-200 shadow-sm hover:shadow-md"
-            size="sm"
-          >
-            নতুন চ্যাট
-          </Button>
+          {/* New Chat Button - Professional Design with proper positioning */}
+          <div className="flex items-center">
+            <Button
+              onClick={onClearHistory}
+              className="bg-blue-600 dark:bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium font-shurjo transition-all duration-200 shadow-sm hover:shadow-md mr-4"
+              size="sm"
+            >
+              <Plus className="w-4 h-4 mr-1" />
+              নতুন চ্যাট
+            </Button>
+          </div>
         </div>
       </div>
     </>

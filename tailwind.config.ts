@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -20,6 +21,7 @@ export default {
 		extend: {
 			fontFamily: {
 				sans: [
+					'ShujoUnicodeRegular',
 					'Shurjo',
 					'ShujoMJ',
 					'Noto Sans Bengali',
@@ -30,6 +32,7 @@ export default {
 					'sans-serif'
 				],
 				bengali: [
+					'ShujoUnicodeRegular',
 					'Shurjo',
 					'ShujoMJ',
 					'Noto Sans Bengali',
@@ -37,6 +40,7 @@ export default {
 					'sans-serif'
 				],
 				shurjo: [
+					'ShujoUnicodeRegular',
 					'Shurjo',
 					'ShujoMJ',
 					'sans-serif'

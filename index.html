@@ -42,6 +42,7 @@
     
     <!-- Font Loading Optimization -->
     <style>
+      /* Shurjo Unicode Regular as primary font */
       @font-face {
         font-family: 'ShujoUnicodeRegular';
         src: url('https://fonts.maateen.me/shurjo/ShujoMJ.woff2') format('woff2'),
@@ -52,7 +53,11 @@
         unicode-range: U+0980-U+09FF, U+200C-U+200D, U+25CC;
       }
       
-      /* Set Shurjo Unicode Regular as primary */
+      /* Apply Shurjo Unicode Regular globally */
+      * {
+        font-family: 'ShujoUnicodeRegular', 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', system-ui, sans-serif !important;
+      }
+      
       body {
         font-family: 'ShujoUnicodeRegular', 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', system-ui, sans-serif !important;
       }
