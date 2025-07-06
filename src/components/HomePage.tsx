@@ -45,22 +45,21 @@ const HomePage = () => {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
-        {/* Header */}
 <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
   <CardHeader className="py-4">
     {/* Admin & Dark Mode Toggle Row */}
-    <div className="flex justify-between items-center mb-4">
-      <Button
-        onClick={() => navigate('/admin')}
-        variant="outline"
-        size="sm"
-        className="bangla-text bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20"
-      >
-        <Settings className="w-4 h-4 mr-1" />
-        Admin
-      </Button>
-      <DarkModeToggle />
-    </div>
+<div className="flex justify-between items-center mb-4">
+  <Button
+    onClick={() => navigate('/admin')}
+    variant="outline"
+    size="sm"
+    className="bangla-text bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20"
+  >
+    <Settings className="w-4 h-4 mr-1" />
+    Admin
+  </Button>
+  <DarkModeToggle />
+</div>
 
     {/* Main Title & Subtitle */}
     <div className="text-center">
