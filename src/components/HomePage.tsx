@@ -56,23 +56,19 @@ const HomePage = () => {
           </CardHeader>
         </Card>
 
-        {/* Admin Button - Fixed Position Top Left */}
-        <div className="fixed top-4 left-4 z-50">
-          <Button
-            onClick={() => navigate('/admin')}
-            variant="outline"
-            size="sm"
-            className="bangla-text bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20"
-          >
-            <Settings className="w-4 h-4 mr-1" />
-            Admin
-          </Button>
-        </div>
-
-        {/* Dark Mode Toggle - Fixed Position Top Right Corner */}
-        <div className="fixed top-4 right-4 z-50">
-          <DarkModeToggle />
-        </div>
+        {/* Top Utility Bar: Admin Button + Dark Mode */}
+<div className="fixed top-4 left-0 right-0 px-4 flex justify-between items-center z-50">
+  <Button
+    onClick={() => navigate('/admin')}
+    variant="outline"
+    size="sm"
+    className="bangla-text bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20"
+  >
+    <Settings className="w-4 h-4 mr-1" />
+    Admin
+  </Button>
+  <DarkModeToggle />
+</div>
 
         {/* Motivational Quote */}
         {currentQuote && (
