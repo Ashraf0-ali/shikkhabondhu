@@ -51,12 +51,12 @@ const HomePage = () => {
               শিক্ষা বন্ধু AI
             </CardTitle>
             <p className="text-lg text-gray-600 dark:text-gray-300 bangla-text">
-              AI এর মাধ্যমে শিক্ষাকে করুন আরও সহজ এবং আনন্দদায়ক
+              AI এর সাহায্যে শিক্ষাকে করুন আরও সহজ এবং আনন্দদায়ক
             </p>
           </CardHeader>
         </Card>
 
-            {/* Admin Button - Fixed Position Top Left */}
+        {/* Admin Button - Fixed Position Top Left */}
         <div className="fixed top-4 left-4 z-50">
           <Button
             onClick={() => navigate('/admin')}
@@ -202,6 +202,7 @@ const HomePage = () => {
           <CardContent className="p-6 text-center">
             <p className="text-sm text-gray-600 bangla-text">
               © ২০২৪ শিক্ষা প্ল্যাটফর্ম। সর্বস্বত্ব সংরক্ষিত।
+ 								Developed by Ashraf Ali
             </p>
           </CardContent>
         </Card>
