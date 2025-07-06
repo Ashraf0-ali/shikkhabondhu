@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,20 +46,9 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header with Admin Button */}
+        {/* Header */}
         <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
-          <CardHeader className="text-center py-8 relative">
-            {/* Admin Button - Top Right */}
-            <Button
-              onClick={() => navigate('/admin')}
-              variant="outline"
-              size="sm"
-              className="absolute top-4 right-4 bangla-text"
-            >
-              <Settings className="w-4 h-4 mr-1" />
-              Admin
-            </Button>
-            
+          <CardHeader className="text-center py-8">
             <CardTitle className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent mb-4 bangla-text font-shurjo">
               শিক্ষা বন্ধু AI
             </CardTitle>
@@ -68,7 +58,20 @@ const HomePage = () => {
           </CardHeader>
         </Card>
 
-        {/* Dark Mode Toggle - Separate Position */}
+        {/* Admin Button - Fixed Position Top Right */}
+        <div className="fixed top-4 right-20 z-50">
+          <Button
+            onClick={() => navigate('/admin')}
+            variant="outline"
+            size="sm"
+            className="bangla-text bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20"
+          >
+            <Settings className="w-4 h-4 mr-1" />
+            Admin
+          </Button>
+        </div>
+
+        {/* Dark Mode Toggle - Fixed Position Top Right Corner */}
         <div className="fixed top-4 right-4 z-50">
           <DarkModeToggle />
         </div>
@@ -210,3 +213,4 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
