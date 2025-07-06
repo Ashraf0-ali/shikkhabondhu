@@ -58,7 +58,6 @@ const HomePage = () => {
     <Settings className="w-4 h-4 mr-1" />
     Admin
   </Button>
-  <DarkModeToggle />
 </div>
 
     {/* Main Title & Subtitle */}
