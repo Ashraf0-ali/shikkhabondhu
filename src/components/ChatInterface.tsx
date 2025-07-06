@@ -98,7 +98,9 @@ const ChatInterface = () => {
         `${inputMessage.trim()}\n\n${fileContent}` : 
         inputMessage.trim();
 
-      const data = await sendChatMessage(finalMessage, []);
+      // পূর্বের সব মেসেজ পাস করি যাতে AI context বুঝতে পারে
+      const chatHistory = prepareChatHistory([...messages, userMessage]);
+      const data = await sendChatMessage(finalMessage, chatHistory);
 
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),

@@ -20,9 +20,10 @@ export const processFileContent = async (file: File): Promise<string> => {
 };
 
 export const prepareChatHistory = (messages: Message[]): Message[] => {
+  // শেষের ১০টি মেসেজ পাস করি context এর জন্য
   return messages
     .filter(msg => msg.content && msg.content.trim() !== '')
-    .slice(-1); // শুধু শেষ মেসেজ
+    .slice(-10);
 };
 
 export const sendChatMessage = async (
@@ -35,10 +36,13 @@ export const sendChatMessage = async (
   }
 
   try {
-    console.log('Sending message to AI...');
+    console.log('Sending message to AI with chat history:', chatHistory.length, 'messages');
     
     const { data, error } = await supabase.functions.invoke('chat-with-gemini', {
-      body: { message: message.trim() }
+      body: { 
+        message: message.trim(),
+        chatHistory: chatHistory
+      }
     });
 
     if (error) {

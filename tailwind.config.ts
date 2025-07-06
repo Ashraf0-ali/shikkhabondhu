@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -20,27 +21,26 @@ export default {
 		extend: {
 			fontFamily: {
 				sans: [
+					'ShujoUnicodeRegular',
 					'Shurjo',
 					'ShujoMJ',
 					'Noto Sans Bengali',
 					'Kalpurush',
-					'Bengali-System',
-					'SolaimanLipi',
 					'system-ui',
 					'-apple-system',
 					'Segoe UI',
 					'sans-serif'
 				],
 				bengali: [
+					'ShujoUnicodeRegular',
 					'Shurjo',
 					'ShujoMJ',
 					'Noto Sans Bengali',
 					'Kalpurush',
-					'Bengali-System',
-					'SolaimanLipi',
 					'sans-serif'
 				],
 				shurjo: [
+					'ShujoUnicodeRegular',
 					'Shurjo',
 					'ShujoMJ',
 					'sans-serif'

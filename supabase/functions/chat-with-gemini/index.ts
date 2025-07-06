@@ -28,7 +28,7 @@ serve(async (req) => {
     }
 
     const requestBody = await req.json();
-    const { message } = requestBody;
+    const { message, chatHistory = [] } = requestBody;
 
     const requestError = validateRequest(message);
     if (requestError) {
@@ -39,12 +39,13 @@ serve(async (req) => {
     }
 
     console.log('Processing message:', message.substring(0, 50));
+    console.log('Chat history length:', chatHistory.length);
 
     // Create Supabase client
     const supabase = createSupabaseClient();
 
-    // Build base context
-    let context = buildBaseContext();
+    // Build base context with chat history
+    let context = buildBaseContext(chatHistory);
 
     // Check if user is asking for books
     const isBookRequest = detectBookRequest(message);
