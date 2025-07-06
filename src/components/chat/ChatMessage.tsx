@@ -1,15 +1,16 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Bot, User, Image, FileText } from 'lucide-react';
+import { Bot, User, Image, FileText, BookOpen } from 'lucide-react';
 import { Message } from './types';
 
 interface ChatMessageProps {
   message: Message;
   onPdfOpen: (url: string, title: string) => void;
+  onBookRead?: (url: string, title: string) => void;
 }
 
-const ChatMessage = ({ message, onPdfOpen }: ChatMessageProps) => {
+const ChatMessage = ({ message, onPdfOpen, onBookRead }: ChatMessageProps) => {
   const getFileIcon = (fileType: string) => {
     if (fileType.startsWith('image/')) {
       return <Image className="w-4 h-4" />;
@@ -46,13 +47,28 @@ const ChatMessage = ({ message, onPdfOpen }: ChatMessageProps) => {
     return links;
   };
 
-  // Clean content by removing raw PDF link lines
+  // Parse book links from message content
+  const parseBookLinks = (content: string) => {
+    const bookLinkRegex = /📚 ([^:]+): (https?:\/\/[^\s]+)/g;
+    const links: Array<{title: string, url: string}> = [];
+    let match;
+    
+    while ((match = bookLinkRegex.exec(content)) !== null) {
+      links.push({ title: match[1].trim(), url: match[2] });
+    }
+    
+    return links;
+  };
+
+  // Clean content by removing raw PDF and book link lines
   const cleanContent = (content: string) => {
     const pdfLinkRegex = /🔗 PDF লিংক: https?:\/\/[^\s\n]+/g;
-    return content.replace(pdfLinkRegex, '').trim();
+    const bookLinkRegex = /📚 [^:]+: https?:\/\/[^\s\n]+/g;
+    return content.replace(pdfLinkRegex, '').replace(bookLinkRegex, '').trim();
   };
 
   const pdfLinks = message.role === 'assistant' ? parsePdfLinks(message.content) : [];
+  const bookLinks = message.role === 'assistant' ? parseBookLinks(message.content) : [];
   const displayContent = message.role === 'assistant' ? cleanContent(message.content) : message.content;
 
   return (
@@ -76,7 +92,7 @@ const ChatMessage = ({ message, onPdfOpen }: ChatMessageProps) => {
           </div>
         )}
         
-        {/* Message content - ChatGPT style without heavy border/background */}
+        {/* Message content */}
         <div className={`${
           message.role === 'user' 
             ? 'bg-blue-500 text-white px-4 py-3 rounded-2xl ml-8' 
@@ -88,6 +104,33 @@ const ChatMessage = ({ message, onPdfOpen }: ChatMessageProps) => {
             {displayContent}
           </p>
         </div>
+
+        {/* Book Reading Buttons */}
+        {bookLinks.length > 0 && (
+          <div className="mt-3 space-y-2">
+            {bookLinks.map((bookLink, index) => (
+              <div key={index} className="flex gap-2">
+                <Button
+                  onClick={() => onBookRead?.(bookLink.url, bookLink.title)}
+                  className="bangla-text bg-blue-600 hover:bg-blue-700 text-white flex-1 justify-start"
+                  size="sm"
+                >
+                  <BookOpen className="w-4 h-4 mr-2" />
+                  📖 {bookLink.title} - এখানে পড়ুন
+                </Button>
+                <Button
+                  onClick={() => onPdfOpen(bookLink.url, bookLink.title)}
+                  variant="outline"
+                  size="sm"
+                  className="bangla-text"
+                >
+                  <FileText className="w-4 h-4 mr-1" />
+                  ডাউনলোড
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
 
         {/* PDF Action Buttons */}
         {pdfLinks.length > 0 && (
