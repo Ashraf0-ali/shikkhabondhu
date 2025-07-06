@@ -67,6 +67,55 @@ const ChatMessage = ({ message, onPdfOpen, onBookRead }: ChatMessageProps) => {
     return content.replace(pdfLinkRegex, '').replace(bookLinkRegex, '').trim();
   };
 
+  // Format markdown text (bold, italic, etc.)
+  const formatMarkdownText = (text: string) => {
+    // Split text by markdown patterns while preserving the markers
+    const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|__[^_]+__|_[^_]+_)/g);
+    
+    return parts.map((part, index) => {
+      // Bold text with **
+      if (part.startsWith('**') && part.endsWith('**')) {
+        const content = part.slice(2, -2);
+        return (
+          <strong key={index} className="font-semibold text-gray-900 dark:text-white">
+            {content}
+          </strong>
+        );
+      }
+      // Bold text with __
+      else if (part.startsWith('__') && part.endsWith('__')) {
+        const content = part.slice(2, -2);
+        return (
+          <strong key={index} className="font-semibold text-gray-900 dark:text-white">
+            {content}
+          </strong>
+        );
+      }
+      // Italic text with *
+      else if (part.startsWith('*') && part.endsWith('*') && !part.startsWith('**')) {
+        const content = part.slice(1, -1);
+        return (
+          <em key={index} className="italic">
+            {content}
+          </em>
+        );
+      }
+      // Italic text with _
+      else if (part.startsWith('_') && part.endsWith('_') && !part.startsWith('__')) {
+        const content = part.slice(1, -1);
+        return (
+          <em key={index} className="italic">
+            {content}
+          </em>
+        );
+      }
+      // Regular text
+      else {
+        return part;
+      }
+    });
+  };
+
   const pdfLinks = message.role === 'assistant' ? parsePdfLinks(message.content) : [];
   const bookLinks = message.role === 'assistant' ? parseBookLinks(message.content) : [];
   const displayContent = message.role === 'assistant' ? cleanContent(message.content) : message.content;
@@ -98,11 +147,11 @@ const ChatMessage = ({ message, onPdfOpen, onBookRead }: ChatMessageProps) => {
             ? 'bg-blue-500 text-white px-4 py-3 rounded-2xl ml-8' 
             : 'text-gray-800 dark:text-gray-200 py-2'
         }`}>
-          <p className={`whitespace-pre-wrap bangla-text text-[15px] leading-relaxed ${
+          <div className={`whitespace-pre-wrap bangla-text text-[15px] leading-relaxed ${
             message.role === 'user' ? 'text-white' : 'text-gray-800 dark:text-gray-200'
           }`}>
-            {displayContent}
-          </p>
+            {message.role === 'assistant' ? formatMarkdownText(displayContent) : displayContent}
+          </div>
         </div>
 
         {/* Book Reading Buttons */}
