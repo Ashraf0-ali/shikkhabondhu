@@ -13,9 +13,9 @@ export const callGeminiAPI = async (context: string, geminiApiKey: string) => {
           parts: [{ text: context }]
         }],
         generationConfig: {
-          temperature: 0.3,
-          topP: 0.8,
-          maxOutputTokens: 150,
+          temperature: 0.7,
+          topP: 0.9,
+          maxOutputTokens: 2048,
         }
       }),
     });

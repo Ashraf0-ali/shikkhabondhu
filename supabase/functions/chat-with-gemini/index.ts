@@ -38,87 +38,100 @@ serve(async (req) => {
       });
     }
 
-    console.log('Processing message:', message.substring(0, 50));
+    console.log('Processing message:', message.substring(0, 100));
     console.log('Chat history length:', chatHistory.length);
 
     // Create Supabase client
     const supabase = createSupabaseClient();
 
-    // Build base context with chat history
+    // Build comprehensive base context with chat history
     let context = buildBaseContext(chatHistory);
 
-    // Check if user is asking for books
+    // Check request types
     const isBookRequest = detectBookRequest(message);
-    
-    // Check if user is asking for MCQ
     const isMCQRequest = detectMCQRequest(message);
+
+    console.log('Request analysis:', { isBookRequest, isMCQRequest });
 
     let foundBooks = [];
     let mcqData = [];
 
-    // Fetch books if book request detected
+    // Fetch books if requested
     if (isBookRequest) {
+      console.log('Fetching books...');
       foundBooks = await fetchBooks(supabase);
+      console.log('Books found:', foundBooks.length);
+      
       if (foundBooks.length > 0) {
         context += buildBookContext(foundBooks, message);
       }
     }
 
-    // Always fetch MCQ data for context, especially if MCQ request detected
-    if (isMCQRequest || message.toLowerCase().includes('প্রশ্ন') || message.toLowerCase().includes('mcq')) {
-      console.log('MCQ request detected, fetching MCQ data...');
-      
-      const { data: allMCQs } = await supabase
-        .from('mcq_questions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50);
+    // Always fetch MCQ data for better context, especially for MCQ requests
+    console.log('Fetching MCQ data...');
+    
+    const { data: allMCQs } = await supabase
+      .from('mcq_questions')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(100);
 
-      mcqData = allMCQs || [];
-      console.log('MCQ data found:', mcqData.length);
+    mcqData = allMCQs || [];
+    console.log('Total MCQ data found:', mcqData.length);
+    
+    if (mcqData.length > 0) {
+      // Enhanced filtering for better matching
+      let filteredMCQs = mcqData;
+      const messageLower = message.toLowerCase();
       
-      if (mcqData.length > 0) {
-        // Filter MCQs based on the request
-        let filteredMCQs = mcqData;
-        
-        // Check for specific board, year, subject in the message
-        const messageLower = message.toLowerCase();
-        
-        if (messageLower.includes('রাজশাহী') || messageLower.includes('rajshahi')) {
-          filteredMCQs = filteredMCQs.filter(mcq => 
-            mcq.board && mcq.board.toLowerCase().includes('রাজশাহী')
-          );
-        }
-        
-        if (messageLower.includes('২০১৷') || messageLower.includes('2017')) {
-          filteredMCQs = filteredMCQs.filter(mcq => 
-            mcq.year === 2017
-          );
-        }
-        
-        if (messageLower.includes('বাংলা') || messageLower.includes('bangla')) {
-          filteredMCQs = filteredMCQs.filter(mcq => 
-            mcq.subject && mcq.subject.toLowerCase().includes('বাংলা')
-          );
-        }
-
-        context += buildMCQContext(filteredMCQs.length > 0 ? filteredMCQs : mcqData);
-        
-        // Add specific information about available MCQs
-        context += `\n\n📊 ডাটাবেজে মোট ${mcqData.length}টি MCQ প্রশ্ন রয়েছে।`;
-        
-        if (filteredMCQs.length > 0 && filteredMCQs.length < mcqData.length) {
-          context += `\n🎯 আপনার অনুরোধ অনুযায়ী ${filteredMCQs.length}টি প্রাসঙ্গিক MCQ পাওয়া গেছে।`;
-        }
-      } else {
-        context += `\n\n⚠️ দুঃখিত, ডাটাবেজে কোন MCQ প্রশ্ন পাওয়া যায়নি।`;
+      // Multi-criteria filtering
+      if (messageLower.includes('রাজশাহী') || messageLower.includes('rajshahi')) {
+        const rajshahiMCQs = filteredMCQs.filter(mcq => 
+          mcq.board && mcq.board.toLowerCase().includes('রাজশাহী')
+        );
+        if (rajshahiMCQs.length > 0) filteredMCQs = rajshahiMCQs;
       }
+      
+      if (messageLower.includes('২০১৭') || messageLower.includes('2017')) {
+        const year2017MCQs = filteredMCQs.filter(mcq => mcq.year === 2017);
+        if (year2017MCQs.length > 0) filteredMCQs = year2017MCQs;
+      }
+      
+      if (messageLower.includes('বাংলা') || messageLower.includes('bangla')) {
+        const banglaMCQs = filteredMCQs.filter(mcq => 
+          mcq.subject && mcq.subject.toLowerCase().includes('বাংলা')
+        );
+        if (banglaMCQs.length > 0) filteredMCQs = banglaMCQs;
+      }
+
+      // Use filtered MCQs if available, otherwise use all
+      const mcqsToUse = filteredMCQs.length > 0 ? filteredMCQs : mcqData.slice(0, 50);
+      context += buildMCQContext(mcqsToUse);
+      
+      // Add context summary
+      context += `\n\n📊 প্রশ্ন ভান্ডার সারসংক্ষেপ:`;
+      context += `\n🔢 মোট MCQ: ${mcqData.length}টি`;
+      
+      if (filteredMCQs.length > 0 && filteredMCQs.length < mcqData.length) {
+        context += `\n🎯 প্রাসঙ্গিক MCQ: ${filteredMCQs.length}টি`;
+      }
+      
+      if (isMCQRequest) {
+        context += `\n\n⚠️ গুরুত্বপূর্ণ: শিক্ষার্থী MCQ প্রশ্ন চেয়েছে। উপরের তালিকা থেকে প্রাসঙ্গিক MCQ দিন।`;
+      }
+    } else {
+      context += `\n\n⚠️ দুঃখিত, ডাটাবেজে কোন MCQ প্রশ্ন পাওয়া যায়নি।`;
     }
 
-    // Add final instructions
+    // Add comprehensive final instructions
     context += buildFinalInstructions(message, foundBooks);
 
+    console.log('Context prepared, calling Gemini API...');
+    console.log('Context length:', context.length);
+
     const reply = await callGeminiAPI(context, geminiApiKey!);
+
+    console.log('Response received, length:', reply.length);
 
     return new Response(JSON.stringify({ reply }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
