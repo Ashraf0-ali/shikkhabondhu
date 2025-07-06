@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -8,6 +7,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Search, FileText, BookOpen, Book, FileTextIcon, Loader2, ExternalLink, Download, Filter, X } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
+import { generateSearchTerms, buildSearchConditions } from '@/utils/searchOptimization';
 
 const SearchInterface = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -44,10 +44,11 @@ const SearchInterface = () => {
         nctbQuery = nctbQuery.eq('class_level', classLevel);
       }
 
-      // Search query প্রয়োগ করা
+      // Enhanced search with SEO optimization
       if (query && query.length >= 2) {
-        const searchTerm = query.toLowerCase();
-        nctbQuery = nctbQuery.or(`title.ilike.%${searchTerm}%,subject.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
+        const searchTerms = generateSearchTerms(query);
+        const searchConditions = buildSearchConditions(searchTerms, 'nctb_books');
+        nctbQuery = nctbQuery.or(searchConditions);
       }
 
       const { data: nctbResults } = await nctbQuery.limit(50);
@@ -80,27 +81,33 @@ const SearchInterface = () => {
 
     setIsSearching(true);
     try {
-      const searchTerm = query.toLowerCase();
+      // Generate enhanced search terms using SEO optimization
+      const searchTerms = generateSearchTerms(query);
+      console.log('Enhanced search terms:', searchTerms);
       
-      // Search MCQ questions
+      // Search MCQ questions with optimized terms
+      const mcqConditions = buildSearchConditions(searchTerms, 'mcq_questions');
       const { data: mcqResults } = await supabase
         .from('mcq_questions')
         .select('*')
-        .or(`question.ilike.%${searchTerm}%,subject.ilike.%${searchTerm}%,chapter.ilike.%${searchTerm}%,board.ilike.%${searchTerm}%`)
+        .or(mcqConditions)
         .limit(20);
 
-      // Search Board questions
+      // Search Board questions with optimized terms
+      const boardConditions = buildSearchConditions(searchTerms, 'board_questions');
       const { data: boardResults } = await supabase
         .from('board_questions')
         .select('*')
-        .or(`title.ilike.%${searchTerm}%,subject.ilike.%${searchTerm}%,board.ilike.%${searchTerm}%`)
+        .or(boardConditions)
         .limit(20);
 
-      // Search NCTB books
+      // Search NCTB books with optimized terms
       let nctbQuery = supabase
         .from('nctb_books')
-        .select('*')
-        .or(`title.ilike.%${searchTerm}%,subject.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`);
+        .select('*');
+
+      const nctbConditions = buildSearchConditions(searchTerms, 'nctb_books');
+      nctbQuery = nctbQuery.or(nctbConditions);
 
       // Class filter প্রয়োগ করা
       if (classFilter) {
@@ -109,20 +116,24 @@ const SearchInterface = () => {
 
       const { data: nctbResults } = await nctbQuery.limit(20);
 
-      // Search Notes
+      // Search Notes with optimized terms
+      const notesConditions = buildSearchConditions(searchTerms, 'notes');
       const { data: notesResults } = await supabase
         .from('notes')
         .select('*')
-        .or(`title.ilike.%${searchTerm}%,subject.ilike.%${searchTerm}%,content.ilike.%${searchTerm}%`)
+        .or(notesConditions)
         .limit(20);
 
-      // Combine and format results
+      // Combine and format results with relevance scoring
       const combinedResults = [
-        ...(mcqResults || []).map(item => ({ ...item, type: 'mcq', icon: FileText })),
-        ...(boardResults || []).map(item => ({ ...item, type: 'board', icon: BookOpen })),
-        ...(nctbResults || []).map(item => ({ ...item, type: 'nctb', icon: Book })),
-        ...(notesResults || []).map(item => ({ ...item, type: 'notes', icon: FileTextIcon }))
+        ...(mcqResults || []).map(item => ({ ...item, type: 'mcq', icon: FileText, relevance: calculateRelevance(item, searchTerms) })),
+        ...(boardResults || []).map(item => ({ ...item, type: 'board', icon: BookOpen, relevance: calculateRelevance(item, searchTerms) })),
+        ...(nctbResults || []).map(item => ({ ...item, type: 'nctb', icon: Book, relevance: calculateRelevance(item, searchTerms) })),
+        ...(notesResults || []).map(item => ({ ...item, type: 'notes', icon: FileTextIcon, relevance: calculateRelevance(item, searchTerms) }))
       ];
+
+      // Sort by relevance score
+      combinedResults.sort((a, b) => b.relevance - a.relevance);
 
       setSearchResults(combinedResults);
     } catch (error) {
@@ -133,6 +144,37 @@ const SearchInterface = () => {
     }
   };
 
+  // Calculate relevance score based on search terms match
+  const calculateRelevance = (item: any, searchTerms: string[]): number => {
+    let score = 0;
+    const searchableText = [
+      item.title || '',
+      item.subject || '',
+      item.question || '',
+      item.content || '',
+      item.chapter || '',
+      item.board || ''
+    ].join(' ').toLowerCase();
+
+    searchTerms.forEach(term => {
+      const termLower = term.toLowerCase();
+      if (searchableText.includes(termLower)) {
+        // Higher score for exact matches in title
+        if ((item.title || '').toLowerCase().includes(termLower)) {
+          score += 10;
+        }
+        // Medium score for subject matches
+        if ((item.subject || '').toLowerCase().includes(termLower)) {
+          score += 5;
+        }
+        // Lower score for other field matches
+        score += 1;
+      }
+    });
+
+    return score;
+  };
+
   useEffect(() => {
     const delayedSearch = setTimeout(() => {
       performSearch(searchQuery);
@@ -141,14 +183,12 @@ const SearchInterface = () => {
     return () => clearTimeout(delayedSearch);
   }, [searchQuery, classFilter]);
 
-  // Class filter clear করা
   const clearClassFilter = () => {
     setClassFilter(null);
     setSearchParams({});
     setSearchResults([]);
   };
 
-  // Class level এর বাংলা নাম
   const getClassLevelName = (level: number) => {
     switch (level) {
       case 6: return '৬ষ্ঠ শ্রেণী';
@@ -181,7 +221,6 @@ const SearchInterface = () => {
 
   const handleFileOpen = (fileUrl: string, title: string) => {
     if (fileUrl) {
-      // Open in new tab/window
       window.open(fileUrl, '_blank', 'noopener,noreferrer');
     } else {
       alert('ফাইল লিংক উপলব্ধ নেই');
@@ -205,7 +244,10 @@ const SearchInterface = () => {
               🔍 স্মার্ট সার্চ
             </CardTitle>
             <p className="text-lg text-gray-600 dark:text-gray-300 bangla-text">
-              সব ধরনের শিক্ষা উপকরণ খুঁজে পান
+              সব ধরনের শিক্ষা উপকরণ খুঁজে পান - বাংলা ও ইংরেজি উভয় ভাষায়
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 bangla-text mt-2">
+              যেমন: "বাংলা ১ম পত্র" বা "bangla first paper" - দুইভাবেই খুঁজুন
             </p>
           </CardHeader>
         </Card>
@@ -233,7 +275,7 @@ const SearchInterface = () => {
           </Card>
         )}
 
-        {/* Search Bar */}
+        {/* Enhanced Search Bar */}
         <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
           <CardContent className="p-6">
             <div className="relative">
@@ -242,7 +284,7 @@ const SearchInterface = () => {
                 type="text"
                 placeholder={classFilter ? 
                   `${getClassLevelName(classFilter)} এর বই অনুসন্ধান করুন...` : 
-                  "MCQ, বোর্ড প্রশ্ন, NCTB বই, নোটস - যেকোনো কিছু খুঁজুন..."
+                  "বাংলা ১ম পত্র, english first paper, গণিত, physics - যেকোনো ভাষায় খুঁজুন..."
                 }
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -251,6 +293,9 @@ const SearchInterface = () => {
               {isSearching && (
                 <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
               )}
+            </div>
+            <div className="mt-3 text-xs text-gray-500 bangla-text">
+              💡 টিপস: "বাংলা ১ম পত্র", "bangla first paper", "গণিত ৮ম শ্রেণী", "physics class 9" - সব ধরনের সার্চ কাজ করবে
             </div>
           </CardContent>
         </Card>
@@ -261,6 +306,11 @@ const SearchInterface = () => {
             <CardHeader>
               <CardTitle className="bangla-text">
                 📊 {classFilter ? `${getClassLevelName(classFilter)} এর বই` : 'সার্চ ফলাফল'} ({searchResults.length})
+                {searchQuery && (
+                  <span className="text-sm font-normal text-gray-500 ml-2">
+                    "{searchQuery}" এর জন্য
+                  </span>
+                )}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -271,6 +321,9 @@ const SearchInterface = () => {
                       `${getClassLevelName(classFilter)} এর কোনো বই পাওয়া যায়নি` : 
                       'কোনো ফলাফল পাওয়া যায়নি'
                     }
+                  </p>
+                  <p className="text-xs text-gray-400 bangla-text mt-2">
+                    অন্য ভাষায় বা ভিন্ন শব্দ দিয়ে চেষ্টা করুন
                   </p>
                 </div>
               ) : (
@@ -305,6 +358,11 @@ const SearchInterface = () => {
                                 {result.class_level && (
                                   <Badge variant="outline" className="text-xs">
                                     শ্রেণী {result.class_level}
+                                  </Badge>
+                                )}
+                                {result.relevance > 5 && (
+                                  <Badge className="bg-green-100 text-green-800 text-xs">
+                                    🎯 উচ্চ মিল
                                   </Badge>
                                 )}
                               </div>
