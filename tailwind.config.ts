@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -20,13 +21,13 @@ export default {
 		extend: {
 			fontFamily: {
 				sans: [
-					'SutonnyMJ',
 					'Shurjo',
+					'SutonnyMJ',
 					'Noto Sans Bengali',
 					'Kalpurush',
 					'Mukti',
 					'Hind Siliguri',
-					'Bengali-Fallback',
+					'Bengali-System',
 					'SolaimanLipi',
 					'Akaash',
 					'Ekushey Lohit',
@@ -36,8 +37,8 @@ export default {
 					'sans-serif'
 				],
 				bengali: [
-					'SutonnyMJ',
 					'Shurjo',
+					'SutonnyMJ',
 					'Noto Sans Bengali',
 					'Kalpurush',
 					'Mukti',
