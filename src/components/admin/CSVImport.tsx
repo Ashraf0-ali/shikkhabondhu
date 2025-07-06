@@ -73,13 +73,19 @@ const CSVImport = () => {
         
         // Parse admission_info if it exists and is valid JSON
         let admissionInfo = {};
-        if (values[10]) { // admission_info column
+        if (values[11]) { // admission_info column (updated index)
           try {
-            admissionInfo = JSON.parse(values[10]);
+            admissionInfo = JSON.parse(values[11]);
           } catch (e) {
-            console.warn(`Invalid JSON in admission_info for row ${index + 1}:`, values[10]);
+            console.warn(`Invalid JSON in admission_info for row ${index + 1}:`, values[11]);
             admissionInfo = {};
           }
+        }
+
+        // Ensure correct_answer is only one character
+        let correctAnswer = (values[5] || 'A').trim().toUpperCase();
+        if (correctAnswer.length > 1) {
+          correctAnswer = correctAnswer.charAt(0); // Take only first character
         }
 
         return {
@@ -88,12 +94,12 @@ const CSVImport = () => {
           option_b: values[2] || '',
           option_c: values[3] || '',
           option_d: values[4] || '',
-          correct_answer: (values[5] || 'A') as 'A' | 'B' | 'C' | 'D',
+          correct_answer: correctAnswer as 'A' | 'B' | 'C' | 'D',
           subject: values[6] || '',
           chapter: values[7] || '',
           board: values[8] || '',
           year: parseInt(values[9]) || new Date().getFullYear(),
-          class_level: values[10] || 'class_9_10', // Default to class_9_10
+          class_level: values[10] || 'class_9_10', // class_level column
           admission_info: admissionInfo
         };
       });
@@ -131,6 +137,7 @@ const CSVImport = () => {
             question,option_a,option_b,option_c,option_d,correct_answer,subject,chapter,board,year,class_level,admission_info
           </code>
           <div className="mt-2">
+            <p><strong>সতর্কতা:</strong> correct_answer অবশ্যই একটি অক্ষর হতে হবে (A, B, C, বা D)</p>
             <p><strong>class_level:</strong> class_9_10, class_11_12, অথবা admission</p>
             <p><strong>admission_info:</strong> ভর্তি পরীক্ষার জন্য JSON (যেমন: {`{"university":"ঢাকা বিশ্ববিদ্যালয়","unit":"A"}`})</p>
           </div>
