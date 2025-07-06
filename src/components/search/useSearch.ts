@@ -152,12 +152,33 @@ export const useSearch = () => {
         .or(notesConditions)
         .limit(20);
 
-      // Combine and format results with relevance scoring
-      const combinedResults = [
-        ...(mcqResults || []).map(item => ({ ...item, type: 'mcq' as const, icon: FileText, relevance: calculateRelevance(item, searchTerms) })),
-        ...(boardResults || []).map(item => ({ ...item, type: 'board' as const, icon: BookOpen, relevance: calculateRelevance(item, searchTerms) })),
-        ...(nctbResults || []).map(item => ({ ...item, type: 'nctb' as const, icon: Book, relevance: calculateRelevance(item, searchTerms) })),
-        ...(notesResults || []).map(item => ({ ...item, type: 'notes' as const, icon: FileTextIcon, relevance: calculateRelevance(item, searchTerms) }))
+      // Combine and format results with relevance scoring and proper type conversion
+      const combinedResults: SearchResult[] = [
+        ...(mcqResults || []).map(item => ({ 
+          ...item, 
+          class_level: item.class_level ? parseInt(item.class_level) : null,
+          type: 'mcq' as const, 
+          icon: FileText, 
+          relevance: calculateRelevance(item, searchTerms) 
+        })),
+        ...(boardResults || []).map(item => ({ 
+          ...item, 
+          type: 'board' as const, 
+          icon: BookOpen, 
+          relevance: calculateRelevance(item, searchTerms) 
+        })),
+        ...(nctbResults || []).map(item => ({ 
+          ...item, 
+          type: 'nctb' as const, 
+          icon: Book, 
+          relevance: calculateRelevance(item, searchTerms) 
+        })),
+        ...(notesResults || []).map(item => ({ 
+          ...item, 
+          type: 'notes' as const, 
+          icon: FileTextIcon, 
+          relevance: calculateRelevance(item, searchTerms) 
+        }))
       ];
 
       // Sort by relevance score

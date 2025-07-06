@@ -8,7 +8,7 @@ export interface SearchResult {
   chapter?: string;
   board?: string;
   year?: number;
-  class_level?: number;
+  class_level?: number | string | null;
   file_url?: string;
   type: 'mcq' | 'board' | 'nctb' | 'notes';
   icon: any;
