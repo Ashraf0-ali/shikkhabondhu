@@ -18,26 +18,24 @@ const ChatHeader = ({ onClearHistory }: ChatHeaderProps) => {
               <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-gray-900 dark:text-white bangla-text">
+              <h1 className="text-lg font-semibold text-gray-900 dark:text-white font-shurjo">
                 AI শিক্ষক
               </h1>
-              <p className="text-sm text-green-600 dark:text-green-400 bangla-text">
+              <p className="text-sm text-green-600 dark:text-green-400 font-shurjo">
                 অনলাইন
               </p>
             </div>
           </div>
+          
+          {/* New Chat Button - Professional Design */}
+          <Button
+            onClick={onClearHistory}
+            className="bg-gray-900 dark:bg-gray-100 hover:bg-gray-800 dark:hover:bg-gray-200 text-white dark:text-gray-900 px-4 py-2 rounded-lg font-medium font-shurjo transition-all duration-200 shadow-sm hover:shadow-md"
+            size="sm"
+          >
+            নতুন চ্যাট
+          </Button>
         </div>
-      </div>
-
-      {/* Floating New Chat Button */}
-      <div className="fixed top-20 right-4 z-50">
-        <Button
-          onClick={onClearHistory}
-          className="bg-blue-500 hover:bg-blue-600 text-white shadow-lg rounded-full p-3 bangla-text"
-          size="sm"
-        >
-          <Plus className="w-5 h-5" />
-        </Button>
       </div>
     </>
   );

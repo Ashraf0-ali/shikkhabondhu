@@ -78,7 +78,7 @@
   
   body {
     @apply bg-background text-foreground;
-    font-family: 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family: 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, -apple-system, 'Segoe UI', sans-serif !important;
     font-feature-settings: "kern" 1, "liga" 1;
     line-height: 1.6;
     letter-spacing: 0.01em;
@@ -109,7 +109,7 @@
 
 /* Universal Bengali text support with Shurjo as primary */
 h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea, label {
-  font-family: 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, sans-serif;
+  font-family: 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, sans-serif !important;
 }
 
 /* Improved dark mode icons visibility */
@@ -138,7 +138,7 @@ h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea, label {
   }
 }
 
-/* ... keep existing code (line-clamp utilities, scrollbar styles, admin panel improvements, font loading optimization) */
+/* Rest of the CSS utilities */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
