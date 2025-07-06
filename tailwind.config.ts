@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -18,6 +19,33 @@ export default {
 			}
 		},
 		extend: {
+			fontFamily: {
+				sans: [
+					'Noto Sans Bengali',
+					'Kalpurush',
+					'Mukti',
+					'Hind Siliguri',
+					'Bengali-Fallback',
+					'SolaimanLipi',
+					'Akaash',
+					'Ekushey Lohit',
+					'system-ui',
+					'-apple-system',
+					'Segoe UI',
+					'sans-serif'
+				],
+				bengali: [
+					'Noto Sans Bengali',
+					'Kalpurush',
+					'Mukti',
+					'Hind Siliguri',
+					'Bengali-System',
+					'SolaimanLipi',
+					'Akaash',
+					'Ekushey Lohit',
+					'sans-serif'
+				]
+			},
 			colors: {
 				border: 'hsl(var(--border))',
 				input: 'hsl(var(--input))',
