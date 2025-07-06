@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -53,13 +51,13 @@ const HomePage = () => {
               শিক্ষা বন্ধু AI
             </CardTitle>
             <p className="text-lg text-gray-600 dark:text-gray-300 bangla-text">
-              আধুনিক প্রযুক্তি সাহায্যে শিক্ষাকে করুন আরও সহজ এবং আনন্দদায়ক
+              AI এর মাধ্যমে শিক্ষাকে করুন আরও সহজ এবং আনন্দদায়ক
             </p>
           </CardHeader>
         </Card>
 
-        {/* Admin Button - Fixed Position Top Right */}
-        <div className="fixed top-4 right-20 z-50">
+        {/* Admin Button - Fixed Position Top Left */}
+        <div className="fixed top-4 left-4 z-50">
           <Button
             onClick={() => navigate('/admin')}
             variant="outline"
@@ -213,4 +211,3 @@ const HomePage = () => {
 };
 
 export default HomePage;
-
