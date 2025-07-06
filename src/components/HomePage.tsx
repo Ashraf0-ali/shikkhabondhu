@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -44,14 +45,9 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header with Admin and Dark Mode Buttons */}
+        {/* Header with Admin Button */}
         <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
           <CardHeader className="text-center py-8 relative">
-            {/* Dark Mode Toggle - Top Left */}
-            <div className="absolute top-4 left-4">
-              <DarkModeToggle />
-            </div>
-            
             {/* Admin Button - Top Right */}
             <Button
               onClick={() => navigate('/admin')}
@@ -71,6 +67,11 @@ const HomePage = () => {
             </p>
           </CardHeader>
         </Card>
+
+        {/* Dark Mode Toggle - Separate Position */}
+        <div className="fixed top-4 right-4 z-50">
+          <DarkModeToggle />
+        </div>
 
         {/* Motivational Quote */}
         {currentQuote && (
