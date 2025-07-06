@@ -1,3 +1,4 @@
+
 export const detectBookRequest = (message: string): boolean => {
   return message.toLowerCase().includes('বই') || 
          message.toLowerCase().includes('পিডিএফ') || 
@@ -9,7 +10,13 @@ export const detectBookRequest = (message: string): boolean => {
 
 export const detectMCQRequest = (message: string): boolean => {
   return message.toLowerCase().includes('mcq') || 
-         message.toLowerCase().includes('এমসিকিউ');
+         message.toLowerCase().includes('এমসিকিউ') ||
+         message.toLowerCase().includes('প্রশ্ন') ||
+         message.toLowerCase().includes('রাজশাহী') ||
+         message.toLowerCase().includes('বোর্ড') ||
+         message.toLowerCase().includes('২০১৷') ||
+         message.toLowerCase().includes('2017') ||
+         message.toLowerCase().includes('বাংলা');
 };
 
 export const validateRequest = (message: string): string | null => {
