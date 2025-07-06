@@ -6,6 +6,7 @@ import { CalendarDays, MessageCircle, Search, BrainCircuit, GraduationCap, Quote
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { DarkModeToggle } from './DarkModeToggle';
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -44,9 +45,14 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header with Admin Button */}
+        {/* Header with Admin and Dark Mode Buttons */}
         <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
           <CardHeader className="text-center py-8 relative">
+            {/* Dark Mode Toggle - Top Left */}
+            <div className="absolute top-4 left-4">
+              <DarkModeToggle />
+            </div>
+            
             {/* Admin Button - Top Right */}
             <Button
               onClick={() => navigate('/admin')}
@@ -58,14 +64,11 @@ const HomePage = () => {
               Admin
             </Button>
             
-            <CardTitle className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent mb-4 bangla-text">
-              স্বাগতম আমাদের শিক্ষা প্ল্যাটফর্মে
+            <CardTitle className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent mb-4 bangla-text font-shurjo">
+              শিক্ষা বন্ধু AI
             </CardTitle>
             <p className="text-lg text-gray-600 dark:text-gray-300 bangla-text">
               আধুনিক প্রযুক্তি সাহায্যে শিক্ষাকে করুন আরও সহজ এবং আনন্দদায়ক
-            </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 bangla-text mt-2">
-              "পড়াশোনা করো, দশের - Study and become a human being"
             </p>
           </CardHeader>
         </Card>
