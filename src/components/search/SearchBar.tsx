@@ -35,8 +35,8 @@ const SearchBar: React.FC<SearchBarProps> = ({
           <Input
             type="text"
             placeholder={classFilter ? 
-              `${getClassLevelName(classFilter)} এর বই অনুসন্ধান করুন...` : 
-              "বাংলা ১ম পত্র, english first paper, গণিত, physics - যেকোনো ভাষায় খুঁজুন..."
+              `${getClassLevelName(classFilter)} এর বই খুঁজুন...` : 
+              "যেকোনো বিষয় খুঁজুন..."
             }
             value={searchQuery}
             onChange={(e) => onSearchQueryChange(e.target.value)}
@@ -45,9 +45,6 @@ const SearchBar: React.FC<SearchBarProps> = ({
           {isSearching && (
             <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 animate-spin" />
           )}
-        </div>
-        <div className="mt-3 text-xs text-gray-500 bangla-text">
-          💡 টিপস: "বাংলা ১ম পত্র", "bangla first paper", "গণিত ৮ম শ্রেণী", "physics class 9" - সব ধরনের সার্চ কাজ করবে
         </div>
       </CardContent>
     </Card>
