@@ -1,7 +1,7 @@
+
 @import url('https://fonts.maateen.me/shurjo/font.css');
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&display=swap');
 @import url('https://fonts.maateen.me/kalpurush/font.css');
-@import url('https://fonts.maateen.me/hindusiliguri/font.css');
 
 @tailwind base;
 @tailwind components;
@@ -78,19 +78,20 @@
   
   body {
     @apply bg-background text-foreground;
-    font-family: 'Shurjo', 'SutonnyMJ', 'Noto Sans Bengali', 'Kalpurush', 'Mukti', 'Hind Siliguri', 'Bengali-System', 'SolaimanLipi', 'Akaash', 'Ekushey Lohit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    font-family: 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, -apple-system, 'Segoe UI', sans-serif;
     font-feature-settings: "kern" 1, "liga" 1;
     line-height: 1.6;
     letter-spacing: 0.01em;
+    font-weight: 400;
   }
 }
 
 /* Enhanced Bengali Font Classes with Shurjo as primary */
 .bangla-text {
-  font-family: 'Shurjo', 'SutonnyMJ', 'Noto Sans Bengali', 'Kalpurush', 'Mukti', 'Hind Siliguri', 'Bengali-System', 'SolaimanLipi', 'Akaash', 'Ekushey Lohit', system-ui, sans-serif !important;
+  font-family: 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, sans-serif !important;
   font-weight: 400;
   line-height: 1.7;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -98,17 +99,17 @@
 }
 
 .bangla-heading {
-  font-family: 'Shurjo', 'SutonnyMJ', 'Noto Sans Bengali', 'Kalpurush', 'Mukti', 'Hind Siliguri', 'Bengali-System', 'SolaimanLipi', 'Akaash', 'Ekushey Lohit', system-ui, sans-serif !important;
-  font-weight: 600;
+  font-family: 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, sans-serif !important;
+  font-weight: 500;
   line-height: 1.5;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.005em;
   font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
   text-rendering: optimizeLegibility;
 }
 
 /* Universal Bengali text support with Shurjo as primary */
 h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea, label {
-  font-family: 'Shurjo', 'SutonnyMJ', 'Noto Sans Bengali', 'Kalpurush', 'Mukti', 'Hind Siliguri', 'Bengali-System', 'SolaimanLipi', 'Akaash', 'Ekushey Lohit', system-ui, sans-serif;
+  font-family: 'Shurjo', 'ShujoMJ', 'Noto Sans Bengali', 'Kalpurush', 'Bengali-System', 'SolaimanLipi', system-ui, sans-serif;
 }
 
 /* Improved dark mode icons visibility */
@@ -137,7 +138,7 @@ h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea, label {
   }
 }
 
-/* Line clamp utilities */
+/* ... keep existing code (line-clamp utilities, scrollbar styles, admin panel improvements, font loading optimization) */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -152,7 +153,6 @@ h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea, label {
   overflow: hidden;
 }
 
-/* Better scrollbar for mobile */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -170,7 +170,6 @@ h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea, label {
   background: rgba(255, 255, 255, 0.2);
 }
 
-/* Admin panel icon improvements */
 .dark .lucide-upload,
 .dark .lucide-file-text,
 .dark .lucide-book-open,
@@ -181,7 +180,6 @@ h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea, label {
   filter: brightness(1) contrast(1);
 }
 
-/* Button icon visibility in dark mode */
 .dark button svg {
   color: inherit !important;
   filter: none !important;
@@ -193,15 +191,13 @@ h1, h2, h3, h4, h5, h6, p, span, div, button, input, textarea, label {
   filter: brightness(1.1);
 }
 
-/* Font loading optimization */
 @font-face {
   font-family: 'Bengali-System';
-  src: local('Kalpurush'), local('SolaimanLipi'), local('Noto Sans Bengali'), local('Mukti'), local('Hind Siliguri');
+  src: local('Shurjo'), local('ShujoMJ'), local('Kalpurush'), local('SolaimanLipi'), local('Noto Sans Bengali');
   font-display: swap;
   unicode-range: U+0980-U+09FF, U+200C-U+200D, U+25CC;
 }
 
-/* Ensure proper text direction for Bengali */
 [lang="bn"], .bangla-text, .bangla-heading {
   direction: ltr;
   unicode-bidi: embed;

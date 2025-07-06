@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -22,15 +21,11 @@ export default {
 			fontFamily: {
 				sans: [
 					'Shurjo',
-					'SutonnyMJ',
+					'ShujoMJ',
 					'Noto Sans Bengali',
 					'Kalpurush',
-					'Mukti',
-					'Hind Siliguri',
 					'Bengali-System',
 					'SolaimanLipi',
-					'Akaash',
-					'Ekushey Lohit',
 					'system-ui',
 					'-apple-system',
 					'Segoe UI',
@@ -38,15 +33,16 @@ export default {
 				],
 				bengali: [
 					'Shurjo',
-					'SutonnyMJ',
+					'ShujoMJ',
 					'Noto Sans Bengali',
 					'Kalpurush',
-					'Mukti',
-					'Hind Siliguri',
 					'Bengali-System',
 					'SolaimanLipi',
-					'Akaash',
-					'Ekushey Lohit',
+					'sans-serif'
+				],
+				shurjo: [
+					'Shurjo',
+					'ShujoMJ',
 					'sans-serif'
 				]
 			},

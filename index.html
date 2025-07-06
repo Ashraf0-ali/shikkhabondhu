@@ -28,25 +28,35 @@
     <meta name="theme-color" content="#3b82f6" />
     <link rel="canonical" href="https://your-domain.com" />
     
-    <!-- Bengali Font Preloading -->
+    <!-- Bengali Font Preloading with Priority to Shurjo -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://fonts.maateen.me">
     
-    <!-- Shurjo Unicode Regular Font (Primary) -->
-    <link href="https://fonts.maateen.me/shurjo/font.css" rel="stylesheet">
+    <!-- Primary Shurjo Unicode Regular Font -->
+    <link href="https://fonts.maateen.me/shurjo/font.css" rel="stylesheet" type="text/css">
     
-    <!-- Additional Bengali Fonts as fallbacks -->
+    <!-- Fallback Bengali Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.maateen.me/kalpurush/font.css" rel="stylesheet">
-    <link href="https://fonts.maateen.me/hindusiliguri/font.css" rel="stylesheet">
     
-    <!-- Fallback system fonts -->
+    <!-- Font Loading Optimization -->
     <style>
       @font-face {
-        font-family: 'Bengali-System';
-        src: local('Shurjo'), local('SutonnyMJ'), local('Kalpurush'), local('Noto Sans Bengali'), local('SolaimanLipi'), local('Akaash'), local('Ekushey Lohit');
+        font-family: 'Shurjo';
+        src: url('https://fonts.maateen.me/shurjo/ShujoMJ.woff2') format('woff2'),
+             url('https://fonts.maateen.me/shurjo/ShujoMJ.woff') format('woff');
+        font-weight: normal;
+        font-style: normal;
         font-display: swap;
+        unicode-range: U+0980-U+09FF, U+200C-U+200D, U+25CC;
+      }
+      
+      @font-face {
+        font-family: 'Bengali-System';
+        src: local('Shurjo'), local('ShujoMJ'), local('Noto Sans Bengali'), local('Kalpurush'), local('SolaimanLipi');
+        font-display: swap;
+        unicode-range: U+0980-U+09FF;
       }
     </style>
   </head>
