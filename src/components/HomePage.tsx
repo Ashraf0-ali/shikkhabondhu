@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { CalendarDays, MessageCircle, Search, BrainCircuit, GraduationCap, Quote, Target, BookOpen } from 'lucide-react';
+import { CalendarDays, MessageCircle, Search, BrainCircuit, GraduationCap, Quote, Target, BookOpen, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,21 +42,35 @@ const HomePage = () => {
   const currentQuote = quotes && quotes.length > 0 ? quotes[currentQuoteIndex] : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4 pb-20">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
+        {/* Header with Admin Button */}
         <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-2xl">
-          <CardHeader className="text-center py-8">
+          <CardHeader className="text-center py-8 relative">
+            {/* Admin Button - Top Right */}
+            <Button
+              onClick={() => navigate('/admin')}
+              variant="outline"
+              size="sm"
+              className="absolute top-4 right-4 bangla-text"
+            >
+              <Settings className="w-4 h-4 mr-1" />
+              Admin
+            </Button>
+            
             <CardTitle className="text-4xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-teal-600 bg-clip-text text-transparent mb-4 bangla-text">
-              🌟 শিক্ষা বন্ধু AI
+              স্বাগতম আমাদের শিক্ষা প্ল্যাটফর্মে
             </CardTitle>
             <p className="text-lg text-gray-600 dark:text-gray-300 bangla-text">
-              আপনার শিক্ষার সহায়ক - MCQ, AI চ্যাট, এবং আরও অনেক কিছু
+              আধুনিক প্রযুক্তি সাহায্যে শিক্ষাকে করুন আরও সহজ এবং আনন্দদায়ক
+            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400 bangla-text mt-2">
+              "পড়াশোনা করো, দশের - Study and become a human being"
             </p>
           </CardHeader>
         </Card>
 
-        {/* Motivational Quote - Smaller Design */}
+        {/* Motivational Quote */}
         {currentQuote && (
           <Card className="bg-white/80 dark:bg-gray-800/70 backdrop-blur-xl border-white/20 shadow-lg">
             <CardContent className="p-4 text-center">
@@ -85,110 +99,105 @@ const HomePage = () => {
           </Card>
         )}
 
-        {/* Features */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Service Cards Title */}
+        <div className="text-center">
+          <h2 className="text-2xl font-bold bangla-text text-gray-800 dark:text-gray-200 mb-2">
+            আমাদের সেবাসমূহ
+          </h2>
+        </div>
+
+        {/* Service Cards */}
+        <div className="space-y-4">
           <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/chat')}>
-            <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
-              <MessageCircle className="w-10 h-10 text-green-500" />
-              <h3 className="text-xl font-semibold bangla-text text-center">AI চ্যাট</h3>
-              <p className="text-gray-600 dark:text-gray-300 bangla-text text-center">AI এর সাথে আপনার যেকোনো প্রশ্নের উত্তর খুঁজুন</p>
+            <CardContent className="p-6 flex items-center space-x-4">
+              <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                <MessageCircle className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold bangla-text">AI চ্যাট</h3>
+                <p className="text-gray-600 dark:text-gray-300 bangla-text text-sm">
+                  কৃত্রিম বুদ্ধিমত্তা সাহায্যে যেকোনো প্রশ্নের উত্তর পান
+                </p>
+              </div>
             </CardContent>
           </Card>
 
           <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/mcqs')}>
-            <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
-              <CalendarDays className="w-10 h-10 text-blue-500" />
-              <h3 className="text-xl font-semibold bangla-text text-center">MCQ প্রশ্ন</h3>
-              <p className="text-gray-600 dark:text-gray-300 bangla-text text-center">বিভিন্ন বিষয়ের MCQ প্রশ্ন দেখুন</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/practice')}>
-            <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
-              <Target className="w-10 h-10 text-purple-500" />
-              <h3 className="text-xl font-semibold bangla-text text-center">MCQ অনুশীলন</h3>
-              <p className="text-gray-600 dark:text-gray-300 bangla-text text-center">ইন্টারেক্টিভ MCQ অনুশীলন করুন</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/tips')}>
-            <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
-              <BrainCircuit className="w-10 h-10 text-orange-500" />
-              <h3 className="text-xl font-semibold bangla-text text-center">শিক্ষা টিপস</h3>
-              <p className="text-gray-600 dark:text-gray-300 bangla-text text-center">পরীক্ষার প্রস্তুতি এবং পড়ালেখার জন্য টিপস</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/quiz')}>
-            <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
-              <GraduationCap className="w-10 h-10 text-purple-500" />
-              <h3 className="text-xl font-semibold bangla-text text-center">কুইজ</h3>
-              <p className="text-gray-600 dark:text-gray-300 bangla-text text-center">নিজেকে যাচাই করুন কুইজের মাধ্যমে</p>
+            <CardContent className="p-6 flex items-center space-x-4">
+              <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center">
+                <CalendarDays className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold bangla-text">MCQ অনুশীলন</h3>
+                <p className="text-gray-600 dark:text-gray-300 bangla-text text-sm">
+                  বিভিন্ন বিষয়ের MCQ প্রশ্ন অনুশীলন করুন
+                </p>
+              </div>
             </CardContent>
           </Card>
 
           <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/search')}>
-            <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
-              <Search className="w-10 h-10 text-teal-500" />
-              <h3 className="text-xl font-semibold bangla-text text-center">স্মার্ট সার্চ</h3>
-              <p className="text-gray-600 dark:text-gray-300 bangla-text text-center">যা খুঁজছেন, তা সহজেই খুঁজে বের করুন</p>
+            <CardContent className="p-6 flex items-center space-x-4">
+              <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                <Search className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold bangla-text">স্মার্ট সার্চ</h3>
+                <p className="text-gray-600 dark:text-gray-300 bangla-text text-sm">
+                  ক্লাস এবং বিষয় ভিত্তিক তথ্য খুঁজে পান
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/quiz')}>
+            <CardContent className="p-6 flex items-center space-x-4">
+              <div className="w-12 h-12 bg-orange-500 rounded-lg flex items-center justify-center">
+                <GraduationCap className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold bangla-text">কুইজ প্রতিযোগিতা</h3>
+                <p className="text-gray-600 dark:text-gray-300 bangla-text text-sm">
+                  নিজের মেধা যাচাই করে কুইজে অংশগ্রহণ করুন
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/tips')}>
+            <CardContent className="p-6 flex items-center space-x-4">
+              <div className="w-12 h-12 bg-red-500 rounded-lg flex items-center justify-center">
+                <BrainCircuit className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold bangla-text">শিক্ষা টিপস</h3>
+                <p className="text-gray-600 dark:text-gray-300 bangla-text text-sm">
+                  পড়াশোনার কার্যকরী টিপস এবং কৌশল
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl hover:scale-105 transition-transform duration-300 cursor-pointer" onClick={() => navigate('/search?type=books')}>
+            <CardContent className="p-6 flex items-center space-x-4">
+              <div className="w-12 h-12 bg-teal-500 rounded-lg flex items-center justify-center">
+                <BookOpen className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-semibold bangla-text">বই সংগ্রহ</h3>
+                <p className="text-gray-600 dark:text-gray-300 bangla-text text-sm">
+                  NCTB এবং অনেক তথ্যপূর্ণ বই
+                </p>
+              </div>
             </CardContent>
           </Card>
         </div>
-
-        {/* NCTB Books Section */}
-        <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold text-center bangla-text flex items-center justify-center gap-2">
-              <BookOpen className="w-8 h-8 text-blue-500" />
-              📚 NCTB বই
-            </CardTitle>
-            <p className="text-center text-gray-600 dark:text-gray-300 bangla-text">
-              সরকারি পাঠ্যবই পড়ুন এবং ডাউনলোড করুন
-            </p>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {[
-                { class: "৬ষ্ঠ শ্রেণী", level: 6 },
-                { class: "৭ম শ্রেণী", level: 7 },
-                { class: "৮ম শ্রেণী", level: 8 },
-                { class: "৯ম-১০ম শ্রেণী", level: 9 }
-              ].map((item) => (
-                <Button
-                  key={item.level}
-                  variant="outline"
-                  className="h-20 flex flex-col items-center justify-center space-y-2 bangla-text hover:bg-blue-50 dark:hover:bg-gray-700"
-                  onClick={() => {
-                    // Navigate to a books page with class filter
-                    navigate(`/search?type=books&class=${item.level}`);
-                  }}
-                >
-                  <BookOpen className="w-6 h-6 text-blue-500" />
-                  <span className="text-sm font-medium">{item.class}</span>
-                </Button>
-              ))}
-            </div>
-            <div className="mt-4 text-center">
-              <Button
-                variant="outline"
-                className="bangla-text"
-                onClick={() => navigate('/search?type=books')}
-              >
-                সব বই দেখুন
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Footer */}
         <Card className="bg-white/90 dark:bg-gray-800/80 backdrop-blur-xl border-white/30 shadow-xl">
           <CardContent className="p-6 text-center">
             <p className="text-sm text-gray-600 bangla-text">
-              Developed by Ashraf | যেকোনো প্রয়োজনে মেসেজ করুন - 
-              <a href="https://wa.me/8801825210571" className="text-blue-600 hover:underline ml-1">
-                WhatsApp: 01825210571
-              </a>
+              © ২০২৪ শিক্ষা প্ল্যাটফর্ম। সর্বস্বত্ব সংরক্ষিত।
             </p>
           </CardContent>
         </Card>

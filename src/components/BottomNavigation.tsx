@@ -39,8 +39,8 @@ const BottomNavigation = () => {
     };
   }, []);
 
-  // Hide bottom navigation when keyboard is visible and on chat page
-  if (isKeyboardVisible && location.pathname === '/chat') {
+  // Hide bottom navigation on homepage and when keyboard is visible on chat page
+  if (location.pathname === '/' || (isKeyboardVisible && location.pathname === '/chat')) {
     return null;
   }
 
