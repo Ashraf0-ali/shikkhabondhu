@@ -56,7 +56,6 @@ const HomePage = () => {
     className="bangla-text bg-white/70 dark:bg-gray-800/70 backdrop-blur-md border-white/20"
   >
     <Settings className="w-4 h-4 mr-1" />
-    Admin
   </Button>
 </div>
 
